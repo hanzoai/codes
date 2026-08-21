@@ -1,0 +1,4 @@
+#!/bin/sh
+# hanzo.codes/install — the installer lives at hanzo.sh; this hands straight to it.
+# One implementation of "fetch a Hanzo binary", reachable by both names.
+exec sh -c "$(curl -fsSL https://hanzo.sh)" -- "$@"

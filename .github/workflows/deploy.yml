@@ -1,0 +1,125 @@
+name: deploy
+
+# Every push to main republishes hanzo.codes, and the job refuses to pass unless
+# the live URL actually serves what was just published. Deploying without
+# checking is how you get a green build over a stale site.
+#
+# The last step is the one that matters most here, and it is not about HTML: it
+# asserts that the robots.txt a crawler receives is OURS. Cloudflare can inject a
+# managed robots.txt at the zone level that disallows ClaudeBot, GPTBot, CCBot
+# and the rest — which is what this domain served before this repo existed. A
+# file in git does not beat a zone setting, so the only way to know is to ask the
+# live host, every time.
+#
+# Runs on GitHub's runner: the only copy of the Cloudflare credential lives in
+# GitHub org secrets, and this repo builds no container image.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hanzo-codes
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: record the bytes users get right now
+        id: before
+        run: echo "md5=$(curl -sS https://hanzo.codes | md5sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      # The site is static, so the only thing that can be wrong before publishing
+      # is the site itself. Cheap asserts, no toolchain.
+      - name: the site is intact
+        run: |
+          set -euo pipefail
+          test -s public/index.html
+          grep -q '<title>Hanzo Codes</title>' public/index.html
+          grep -q 'ai-train=yes' public/robots.txt
+          ! grep -qE '^Disallow: /$' public/robots.txt
+          for f in index.md llms.txt sitemap.xml favicon.svg install; do test -s "public/$f"; done
+          dash -n public/install
+          # The palette is monochrome on purpose — @hanzo/tokens is a
+          # zero-saturation ramp and @hanzo/brand paints dark as #000/#fff. This
+          # domain shipped a warm cream-and-orange page for a while; the check
+          # exists so that cannot happen again quietly.
+          bad=$(grep -ohE '#[0-9a-fA-F]{6}' public/index.html public/favicon.svg | sort -fu \
+                | grep -viE '^#(000000|ffffff|dddddd|f4f4f2|9c9c98|6a6a66|0a0a0a|232323|3a3a3a|d8d8d4|141414)$' || true)
+          [ -z "$bad" ] || { echo "::error::non-monochrome colour in the page: $bad"; exit 1; }
+
+      - name: publish
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler@3 deploy
+
+      # Cloudflare answers this host with `cf-cache-status: HIT`, so a fresh
+      # deploy is not the same thing as a fresh response. Best-effort: the token
+      # may not carry Cache Purge, and the checks below are what actually decide.
+      - name: purge the edge
+        continue-on-error: true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          zone=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                 "https://api.cloudflare.com/client/v4/zones?name=hanzo.codes" \
+                 | sed -n 's/.*"id":"\([0-9a-f]\{32\}\)".*/\1/p' | head -1)
+          [ -n "$zone" ] || { echo "no zone id — leaving it to revalidation"; exit 0; }
+          curl -sS -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+               -H "Content-Type: application/json" --data '{"purge_everything":true}' \
+               "https://api.cloudflare.com/client/v4/zones/$zone/purge_cache" | head -c 300
+
+      - name: the live bytes are the new bytes
+        run: |
+          set -euo pipefail
+          want=$(md5sum public/index.html | cut -d' ' -f1)
+          got=
+          for _ in $(seq 1 30); do
+            got=$(curl -sS https://hanzo.codes | md5sum | cut -d' ' -f1)
+            [ "$got" = "$want" ] && break
+            sleep 10
+          done
+          echo "before : ${{ steps.before.outputs.md5 }}"
+          echo "built  : $want"
+          echo "live   : $got"
+          [ "$got" = "$want" ] || {
+            echo "::error::hanzo.codes is serving different bytes than were just published"
+            exit 1; }
+
+      - name: every companion file answers
+        run: |
+          set -euo pipefail
+          for p in robots.txt llms.txt index.md sitemap.xml favicon.svg install; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' "https://hanzo.codes/$p")
+            echo "$p -> $code"
+            [ "$code" = 200 ] || { echo "::error::/$p answered $code"; exit 1; }
+          done
+
+      # The point of this repo. If Cloudflare's managed robots.txt is switched on
+      # for this zone it replaces ours, and an AI company ends up telling every AI
+      # to go away. A file in git cannot fix that — only the dashboard toggle
+      # ("AI Scrapers and Crawlers" / managed robots.txt) can — so fail loudly and
+      # name the fix rather than shipping green over a blocked site.
+      - name: crawlers are actually welcome
+        run: |
+          set -euo pipefail
+          curl -sS https://hanzo.codes/robots.txt -o /tmp/live-robots.txt
+          if ! grep -q 'ai-train=yes' /tmp/live-robots.txt; then
+            echo "::error::the live robots.txt is not ours — Cloudflare's managed robots.txt is overriding it."
+            echo "::error::Fix in the Cloudflare dashboard: hanzo.codes zone -> AI Scrapers and Crawlers -> turn off the managed robots.txt / block-AI-bots setting."
+            echo "--- what the host actually serves ---"; cat /tmp/live-robots.txt
+            exit 1
+          fi
+          for bot in ClaudeBot GPTBot CCBot Google-Extended Bytespider Amazonbot meta-externalagent Applebot-Extended PerplexityBot; do
+            if awk -v b="$bot" 'BEGIN{IGNORECASE=1} $0 ~ "^User-agent:[[:space:]]*"b"[[:space:]]*$" {f=1;next} /^User-agent:/{f=0} f && /^Disallow:[[:space:]]*\/[[:space:]]*$/ {found=1} END{exit !found}' /tmp/live-robots.txt; then
+              echo "::error::$bot is disallowed on the live robots.txt"; exit 1
+            fi
+          done
+          echo "hanzo.codes welcomes every named crawler, from ${GITHUB_SHA:0:8}"

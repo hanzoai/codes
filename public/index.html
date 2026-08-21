@@ -11,7 +11,9 @@
 <meta property="og:title" content="Hanzo Codes">
 <meta property="og:description" content="Describe the work. Hanzo does it in your repo, on your machine, against your tests.">
 <meta property="og:url" content="https://hanzo.codes/">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://hanzo.codes/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://hanzo.codes/og.png">
 <meta name="twitter:site" content="@hanzoai">
 <style>
 /* One visual world, deliberately: a dark instrument panel, monochrome to the
@@ -30,6 +32,9 @@
   --line:#232323; --line-hi:#3a3a3a;
   --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  /* hanzo.ai: every control is a pill, every panel is soft. Measured there —
+     buttons compute to 9999px, cards to 24px. */
+  --pill:999px; --soft-r:16px;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
@@ -54,7 +59,9 @@ nav a.up:hover{color:var(--ink)}
 
 /* The dot field. One repeating radial-gradient faded along the diagonal by a
    mask, so it reads as a wave rather than as wallpaper. */
-.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+/* No overflow:hidden — the dot field is inset:0 and never spills, and clipping
+   here would cut off the setup menu where it drops past the hero. */
+.hero{position:relative;border-bottom:1px solid var(--line)}
 .hero::before{content:"";position:absolute;inset:0;
   background-image:radial-gradient(var(--line-hi) 1px, transparent 1px);
   background-size:7px 7px;
@@ -69,14 +76,64 @@ h1{font-family:var(--mono);font-size:clamp(2rem,5.4vw,3.4rem);line-height:1.12;
 h1 em{font-style:normal;color:var(--faint)}
 .lede{color:var(--soft);font-size:1.05rem;max-width:54ch;margin:0 0 2.25rem}
 
-.btns{display:flex;flex-wrap:wrap;gap:.7rem}
-.btn{display:inline-block;font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;
-  text-transform:uppercase;padding:.8rem 1.3rem;border:1px solid var(--line-hi);
-  color:var(--ink);text-decoration:none;background:transparent}
+.btns{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.55rem;
+  min-height:44px;padding:0 1.75rem;border-radius:var(--pill);
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+  border:1px solid var(--line-hi);color:var(--ink);text-decoration:none;
+  background:transparent;cursor:pointer;white-space:nowrap;
+  transition:background .15s ease,border-color .15s ease,color .15s ease}
 .btn:hover{background:#141414;text-decoration:none;border-color:var(--soft)}
 .btn.solid{background:var(--ink);color:#000;border-color:var(--ink)}
-.btn.solid:hover{background:#d8d8d4}
+.btn.solid:hover{background:#d8d8d4;border-color:#d8d8d4}
 .btn:focus-visible{outline:1px solid var(--ink);outline-offset:3px}
+.btn svg{width:14px;height:14px;flex:none}
+
+/* Copy the setup prompt, or open the list and take the one written for your
+   agent. The pair reads as one pill: left half rounded left, right half right. */
+.split{position:relative;display:inline-flex}
+.split .go{border-radius:var(--pill) 0 0 var(--pill);padding-right:1.2rem}
+.split .chev{border-radius:0 var(--pill) var(--pill) 0;padding:0 1.05rem 0 .9rem;
+  border-left:1px solid rgba(0,0,0,.28)}
+.split .chev svg{width:11px;height:11px;transition:transform .18s ease}
+.split .chev[aria-expanded=true] svg{transform:rotate(180deg)}
+.menu{position:absolute;z-index:30;top:calc(100% + .5rem);left:0;min-width:17.5rem;
+  padding:.35rem;background:var(--panel);border:1px solid var(--line-hi);
+  border-radius:var(--soft-r);box-shadow:0 20px 44px rgba(0,0,0,.65);display:none}
+.menu[data-open]{display:block}
+.menu button,.menu a{display:flex;align-items:center;gap:.7rem;width:100%;
+  min-height:38px;padding:0 .9rem;border:0;border-radius:var(--pill);
+  background:transparent;font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--soft);text-align:left;text-decoration:none;
+  cursor:pointer}
+.menu button:hover,.menu a:hover{background:#141414;color:var(--ink)}
+.menu button:focus-visible,.menu a:focus-visible{outline:1px solid var(--ink);
+  outline-offset:-2px}
+.menu svg{width:15px;height:15px;flex:none}
+.menu hr{margin:.3rem .55rem;border-top:1px solid var(--line)}
+
+/* Every client that can attach the toolset. It scrolls on its own, stops when
+   you point at it, and holds still if the OS asked for less motion. */
+.agents{border-bottom:1px solid var(--line);overflow:hidden}
+.agents .in{max-width:60rem;margin:0 auto;padding:1.2rem 1.75rem}
+.agents .lbl{margin:0 0 .7rem}
+/* No gap here: the loop translates one row by exactly its own width, so any
+   gap between the two rows shows up as a jump each cycle. Spacing is the
+   row's own trailing padding. */
+.agents .track{display:flex;overflow-x:auto;scrollbar-width:none;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 3rem,#000 calc(100% - 3rem),transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 3rem,#000 calc(100% - 3rem),transparent)}
+.agents .track::-webkit-scrollbar{display:none}
+.agents .row{display:flex;gap:.5rem;flex:none;padding-right:.5rem;
+  animation:drift 34s linear infinite}
+.agents:hover .row,.agents:focus-within .row{animation-play-state:paused}
+@keyframes drift{to{transform:translateX(-100%)}}
+.agent{display:inline-flex;align-items:center;gap:.5rem;flex:none;min-height:34px;
+  padding:0 .95rem;border:1px solid var(--line);border-radius:var(--pill);
+  background:var(--panel);font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--soft);white-space:nowrap}
+.agent svg{width:14px;height:14px;flex:none}
+@media (prefers-reduced-motion:reduce){.agents .row{animation:none}}
 
 /* The install strip: the one line most visitors came for, and a button that
    puts it on the clipboard. */
@@ -92,7 +149,9 @@ h1 em{font-style:normal;color:var(--faint)}
 @media (max-width:34rem){.strip b{border-right:0;padding-right:0}}
 .copy{margin-left:auto;font:inherit;font-size:.68rem;letter-spacing:.14em;
   text-transform:uppercase;color:var(--soft);background:transparent;
-  border:1px solid var(--line-hi);padding:.42rem .8rem;cursor:pointer}
+  border:1px solid var(--line-hi);border-radius:var(--pill);
+  display:inline-flex;align-items:center;min-height:34px;padding:0 1rem;cursor:pointer;
+  transition:color .15s ease,border-color .15s ease}
 .copy:hover{color:var(--ink);border-color:var(--soft)}
 .copy:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
 
@@ -111,8 +170,8 @@ a:hover{text-decoration-color:var(--ink)}
 a:focus-visible{outline:1px solid var(--ink);outline-offset:3px}
 code{font-family:var(--mono);font-size:.85em;background:var(--panel);
   border:1px solid var(--line);border-radius:3px;padding:.1em .36em;color:var(--ink)}
-pre{background:var(--panel);border:1px solid var(--line);padding:1rem 1.1rem;
-  overflow-x:auto;margin:0 0 1.25rem}
+pre{background:var(--panel);border:1px solid var(--line);border-radius:var(--soft-r);
+  padding:1rem 1.1rem;overflow-x:auto;margin:0 0 1.25rem}
 pre code{background:none;border:0;padding:0;font-size:.82rem;line-height:1.9;
   display:block;white-space:pre}
 /* A comment must not read at the same weight as the command it annotates. */
@@ -122,8 +181,9 @@ hr{border:0;border-top:1px solid var(--line);margin:3.5rem 0 0}
   text-transform:uppercase;color:var(--faint);margin:0 0 .55rem}
 
 /* A transcript, not a screenshot: real text, selectable and copyable. */
-.term{background:var(--panel);border:1px solid var(--line);padding:1.1rem 1.2rem;
-  font-family:var(--mono);font-size:.82rem;line-height:1.9;overflow-x:auto;margin:0 0 1.25rem}
+.term{background:var(--panel);border:1px solid var(--line);border-radius:var(--soft-r);
+  padding:1.1rem 1.2rem;font-family:var(--mono);font-size:.82rem;line-height:1.9;
+  overflow-x:auto;margin:0 0 1.25rem}
 .term div{white-space:pre}
 .term .p{color:var(--faint)}
 .term .c{color:var(--faint)}
@@ -132,9 +192,11 @@ hr{border:0;border-top:1px solid var(--line);margin:3.5rem 0 0}
 /* min-width so a narrow screen scrolls the table rather than crushing the last
    column to two words a line; tabindex on the element makes that scroll
    reachable from the keyboard. */
-table{border-collapse:collapse;width:100%;min-width:36rem;margin:0 0 1.25rem;
-  font-size:.9rem;display:block;overflow-x:auto}
-table:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
+/* The scroller has to be the parent. min-width on the element that also owns
+   overflow-x makes the element itself wider than the page. */
+.scroll{overflow-x:auto;max-width:100%;margin:0 0 1.25rem}
+.scroll:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
+table{border-collapse:collapse;width:100%;min-width:36rem;font-size:.9rem}
 th,td{border:1px solid var(--line);padding:.55rem .75rem;text-align:left;vertical-align:top}
 th{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
   color:var(--faint);font-weight:400;white-space:nowrap}
@@ -170,6 +232,17 @@ footer a{color:var(--soft)}
      Corpus:   https://hanzoskills.com/all.md
      Crawlers are welcome here — see /robots.txt. -->
 <body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="m-hanzo" viewBox="0 0 67 67" fill="currentColor"><path d="M22.21 67V44.6369H0V67H22.21Z"/><path d="M0 44.6369L22.21 46.8285V44.6369H0Z"/><path d="M66.7038 22.3184H22.2534L0.0878906 44.6367H44.4634L66.7038 22.3184Z"/><path d="M22.21 0H0V22.3184H22.21V0Z"/><path d="M66.7198 0H44.5098V22.3184H66.7198V0Z"/><path d="M66.6753 22.3185L44.5098 20.0822V22.3185H66.6753Z"/><path d="M66.7198 67V44.6369H44.5098V67H66.7198Z"/></symbol>
+<symbol id="m-claude" viewBox="0 0 100 100" fill="currentColor"><path d="M25.7146 63.2153L41.4393 54.3917L41.7025 53.6226L41.4393 53.1976H40.6705L38.0394 53.0359L29.054 52.7929L21.2624 52.4691L13.7134 52.0644L11.8111 51.6594L10.0303 49.3118L10.2123 48.138L11.8111 47.0657L14.0981 47.2681L19.1574 47.6119L26.7467 48.138L32.2516 48.4618L40.4073 49.3118H41.7025L41.8846 48.7857L41.4393 48.4618L41.0955 48.138L33.243 42.8155L24.7432 37.1894L20.2909 33.9513L17.8824 32.3119L16.6684 30.774L16.1422 27.4147L18.328 25.0062L21.2624 25.2088L22.0112 25.4112L24.9861 27.6979L31.3407 32.616L39.6381 38.7273L40.8525 39.7391L41.3381 39.395L41.399 39.1523L40.8525 38.2415L36.3394 30.0858L31.5227 21.7883L29.3775 18.3478L28.811 16.2837C28.6087 15.4334 28.4669 14.7252 28.4669 13.8549L30.9563 10.4753L32.3321 10.0303L35.6515 10.4756L37.0479 11.6897L39.112 16.4052L42.4513 23.8327L47.6321 33.9313L49.15 36.9265L49.9594 39.6991L50.2632 40.5491H50.7894V40.0632L51.2141 34.3766L52.0035 27.3944L52.7726 18.4087L53.0358 15.8793L54.2905 12.8435L56.7795 11.2041L58.7224 12.135L60.3212 14.422L60.0986 15.899L59.1474 22.0718L57.2857 31.7458L56.0713 38.2218H56.7795L57.5892 37.4121L60.8677 33.061L66.3723 26.18L68.801 23.448L71.6342 20.4325L73.4556 18.9957H76.8962L79.4255 22.7601L78.2926 26.6456L74.7509 31.1384L71.8163 34.943L67.607 40.6097L64.9758 45.1431L65.2188 45.5072L65.8464 45.4466L75.358 43.4228L80.4984 42.4917L86.6304 41.4393L89.4033 42.7346L89.7065 44.0502L88.6135 46.7419L82.0566 48.3607L74.3662 49.8989L62.9118 52.6109L62.77 52.7121L62.9321 52.9144L68.0925 53.4L70.2987 53.5214H75.7021L85.7601 54.2702L88.3912 56.0108L89.9697 58.1358L89.7065 59.7545L85.6589 61.8189L80.1949 60.5236L67.4452 57.4881L63.0735 56.3952H62.4665V56.7596L66.1093 60.3213L72.7877 66.3523L81.1461 74.1236L81.5707 76.0462L80.4984 77.5638L79.3649 77.4021L72.0186 71.8772L69.1854 69.3879L62.77 63.9844H62.3453V64.5509L63.8223 66.7164L71.6342 78.4544L72.0389 82.0567L71.4725 83.2308L69.4487 83.939L67.2222 83.534L62.6485 77.1189L57.9333 69.8937L54.1284 63.4177L53.6631 63.6809L51.4167 87.8651L50.3644 89.0995L47.9356 90.0303L45.9121 88.4924L44.8392 86.0031L45.9118 81.0852L47.2071 74.6701L48.2594 69.5699L49.2106 63.2356L49.7773 61.131L49.7367 60.9892L49.2715 61.0498L44.4954 67.607L37.23 77.4224L31.4825 83.5746L30.1063 84.1211L27.7181 82.8864L27.9408 80.6805L29.2763 78.7177L37.2297 68.5988L42.026 62.3248L45.1227 58.7025L45.1024 58.176H44.9204L23.7917 71.8975L20.0274 72.3831L18.4083 70.8655L18.6106 68.3761L19.3798 67.5664L25.7343 63.195L25.7146 63.2153Z"/></symbol>
+<symbol id="m-codex" viewBox="0 0 100 100" fill="currentColor"><path d="M83.7733 42.8087C84.6678 40.1149 84.9771 37.2613 84.6807 34.4385C84.3843 31.6156 83.489 28.8885 82.0544 26.4394C77.6908 18.8436 68.9203 14.9365 60.3548 16.7725C57.9831 14.1344 54.9591 12.1668 51.5864 11.0673C48.2137 9.96772 44.611 9.77498 41.1402 10.5084C37.6694 11.2418 34.4527 12.8755 31.8132 15.2455C29.1736 17.6155 27.204 20.6383 26.1024 24.0103C23.3212 24.5806 20.6938 25.738 18.3958 27.405C16.0977 29.0721 14.1819 31.2104 12.7765 33.6772C8.36538 41.2609 9.3669 50.8267 15.2527 57.3327C14.3549 60.0251 14.0424 62.8782 14.3361 65.7012C14.6298 68.5241 15.523 71.2518 16.9558 73.7017C21.325 81.3002 30.1011 85.207 38.6712 83.3686C40.5554 85.4904 42.8707 87.1858 45.4623 88.3416C48.0539 89.4975 50.8622 90.0871 53.6999 90.0713C62.4793 90.079 70.2575 84.4114 72.9393 76.0515C75.7201 75.4802 78.347 74.3225 80.6449 72.6555C82.9427 70.9886 84.8587 68.8507 86.2649 66.3846C90.6227 58.8145 89.6172 49.3005 83.7733 42.8087ZM53.6999 84.8356C50.1955 84.8411 46.801 83.6129 44.1116 81.3661L44.5848 81.098L60.5123 71.9043C60.9087 71.6718 61.2379 71.3402 61.4674 70.942C61.6969 70.5439 61.8189 70.0929 61.8215 69.6333V47.1769L68.5553 51.072C68.6225 51.1063 68.6694 51.1707 68.6814 51.2456V69.854C68.6641 78.1208 61.9667 84.8183 53.6999 84.8356ZM21.4977 71.0843C19.7402 68.0497 19.1092 64.4925 19.7156 61.0386L20.1885 61.3225L36.1321 70.5165C36.5266 70.748 36.9757 70.87 37.4331 70.87C37.8905 70.87 38.3396 70.748 38.7341 70.5165L58.21 59.2883V67.0628C58.2081 67.1031 58.1973 67.1424 58.1782 67.1779C58.1591 67.2134 58.1322 67.2441 58.0996 67.2678L41.9671 76.5722C34.798 80.7022 25.6388 78.2463 21.4977 71.0843ZM17.3026 36.3898C19.0723 33.3357 21.8655 31.0062 25.1878 29.8138V48.7376C25.1818 49.1949 25.2986 49.6453 25.5261 50.042C25.7535 50.4387 26.0833 50.7671 26.4809 50.9928L45.8622 62.1739L39.1283 66.069C39.0919 66.0883 39.0513 66.0984 39.0101 66.0984C38.9689 66.0984 38.9283 66.0883 38.8919 66.069L22.7908 56.7809C15.6359 52.6337 13.1822 43.4816 17.3026 36.3112V36.3898ZM72.624 49.2426L53.1792 37.9512L59.8976 34.0718C59.9341 34.0524 59.9747 34.0423 60.016 34.0423C60.0573 34.0423 60.0979 34.0524 60.1344 34.0718L76.2355 43.3761C78.6973 44.7966 80.7043 46.8882 82.0221 49.4065C83.3398 51.9249 83.914 54.7661 83.6775 57.5985C83.4411 60.431 82.4038 63.1377 80.6867 65.4027C78.9696 67.6677 76.6436 69.3975 73.9803 70.3901V51.466C73.9663 51.0096 73.834 50.5647 73.5962 50.1749C73.3584 49.7851 73.0234 49.4638 72.624 49.2426ZM79.3261 39.1657L78.8529 38.8815L62.9411 29.6089C62.5442 29.376 62.0924 29.2532 61.6322 29.2532C61.172 29.2532 60.7202 29.376 60.3233 29.6089L40.8629 40.8374V33.0628C40.8587 33.0233 40.8654 32.9834 40.882 32.9473C40.8987 32.9113 40.9248 32.8803 40.9575 32.8579L57.0586 23.5692C59.5263 22.1476 62.3478 21.458 65.193 21.5811C68.0382 21.7042 70.7896 22.6348 73.1253 24.2642C75.461 25.8936 77.2845 28.1543 78.3825 30.782C79.4806 33.4097 79.8077 36.2957 79.3257 39.1025V39.1657H79.3261ZM37.1888 52.9484L30.455 49.069C30.4213 49.0487 30.3925 49.0212 30.3707 48.9884C30.3488 48.9557 30.3345 48.9186 30.3286 48.8797V30.3188C30.3323 27.4714 31.1466 24.6839 32.6761 22.2822C34.2057 19.8805 36.3874 17.9639 38.9661 16.7564C41.5448 15.549 44.4139 15.1005 47.2381 15.4636C50.0622 15.8267 52.7247 16.9862 54.9141 18.8067L54.4409 19.0748L38.5134 28.2686C38.117 28.5011 37.7879 28.8327 37.5584 29.2308C37.329 29.629 37.207 30.0799 37.2045 30.5395L37.1888 52.9487V52.9484ZM40.8472 45.0632L49.5209 40.0643L58.21 45.0635V55.0615L49.5523 60.0608L40.8632 55.0615L40.8472 45.0632Z"/></symbol>
+<symbol id="m-cursor" viewBox="0 0 100 100" fill="currentColor"><path d="M84.0704 28.9353L51.9066 10.4454C50.8738 9.85153 49.5994 9.85153 48.5666 10.4454L16.4043 28.9353C15.536 29.4345 15 30.3576 15 31.3575V68.6425C15 69.6424 15.536 70.5655 16.4043 71.0647L48.5681 89.5546C49.6009 90.1485 50.8753 90.1485 51.9081 89.5546L84.0719 71.0647C84.9402 70.5655 85.4762 69.6424 85.4762 68.6425V31.3575C85.4762 30.3576 84.9402 29.4345 84.0719 28.9353H84.0704ZM82.0501 32.8519L51.0006 86.4003C50.7907 86.7611 50.2366 86.6138 50.2366 86.1958V51.1329C50.2366 50.4322 49.8606 49.7842 49.2506 49.4324L18.7553 31.9017C18.3929 31.6927 18.5409 31.141 18.9606 31.141H81.0595C81.9414 31.141 82.4925 32.0927 82.0516 32.8534H82.0501V32.8519Z"/></symbol>
+<symbol id="m-openai" viewBox="0 0 24 24" fill="currentColor"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.6 8.3829l2.02-1.1638a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></symbol>
+<symbol id="m-openclaw" viewBox="0 0 24 24"><rect x="1.1" y="1.1" width="21.8" height="21.8" rx="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><text x="12" y="16.2" text-anchor="middle" fill="currentColor" font-family="ui-monospace,monospace" font-size="9" font-weight="600">OC</text></symbol>
+<symbol id="m-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="m-doc" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 2v6h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+</svg>
 
 <nav><div class="in">
   <a class="brand" href="/">
@@ -225,9 +298,20 @@ footer a{color:var(--soft)}
   toolset is attached the moment a session starts, and everything it reaches is an
   ordinary API call — so the same work runs with a terminal or without one.</p>
   <div class="btns">
-    <a class="btn solid" href="#install">Install</a>
+    <div class="split">
+      <button class="btn solid go" data-setup="default">Copy setup prompt</button>
+      <button class="btn solid chev" aria-haspopup="menu" aria-expanded="false"
+        aria-label="Pick your agent"><svg><use href="#m-chev"/></svg></button>
+      <div class="menu" role="menu" aria-label="Setup prompt for your agent">
+      <button role="menuitem" data-setup="claude"><svg><use href="#m-claude"/></svg>Open in Claude Code</button>
+      <button role="menuitem" data-setup="codex"><svg><use href="#m-codex"/></svg>Open in Codex</button>
+      <button role="menuitem" data-setup="cursor"><svg><use href="#m-cursor"/></svg>Open in Cursor</button>
+        <hr>
+        <a role="menuitem" href="https://hanzoskills.com/skill.md"><svg><use href="#m-doc"/></svg>View skill.md</a>
+      </div>
+    </div>
+    <a class="btn" href="#install">Install</a>
     <a class="btn" href="#reach">What it can reach</a>
-    <a class="btn" href="https://hanzoskills.com">Docs for agents</a>
   </div>
 </div></div>
 
@@ -235,6 +319,15 @@ footer a{color:var(--soft)}
   <b>Install</b>
   <code id="one">curl -fsSL https://hanzo.sh | sh</code>
   <button class="copy" data-copy="#one">Copy</button>
+</div></div>
+
+
+<div class="agents"><div class="in">
+  <p class="lbl">Drop into any agent</p>
+  <div class="track">
+    <div class="row"><span class="agent"><svg><use href="#m-claude"/></svg>Claude Code</span><span class="agent"><svg><use href="#m-codex"/></svg>Codex</span><span class="agent"><svg><use href="#m-cursor"/></svg>Cursor</span><span class="agent"><svg><use href="#m-openclaw"/></svg>OpenClaw</span><span class="agent"><svg><use href="#m-hanzo"/></svg>Hanzo Bot</span><span class="agent"><svg><use href="#m-hanzo"/></svg>Hanzo dev</span><span class="agent"><svg><use href="#m-claude"/></svg>Anthropic SDK</span><span class="agent"><svg><use href="#m-openai"/></svg>OpenAI SDK</span></div>
+    <div class="row" aria-hidden="true"><span class="agent"><svg><use href="#m-claude"/></svg>Claude Code</span><span class="agent"><svg><use href="#m-codex"/></svg>Codex</span><span class="agent"><svg><use href="#m-cursor"/></svg>Cursor</span><span class="agent"><svg><use href="#m-openclaw"/></svg>OpenClaw</span><span class="agent"><svg><use href="#m-hanzo"/></svg>Hanzo Bot</span><span class="agent"><svg><use href="#m-hanzo"/></svg>Hanzo dev</span><span class="agent"><svg><use href="#m-claude"/></svg>Anthropic SDK</span><span class="agent"><svg><use href="#m-openai"/></svg>OpenAI SDK</span></div>
+  </div>
 </div></div>
 
 <div class="wrap">
@@ -328,7 +421,7 @@ same tools under the same identity and the same cap.</p>
 <p>These are capabilities of the cloud, not features of an editor. Each answers
 on its own path under <code>api.hanzo.ai</code>, each is a tool inside a session,
 and each is plain HTTP outside of one. The ones a coding session leans on:</p>
-<table tabindex="0">
+<div class="scroll" tabindex="0"><table>
 <thead><tr><th>Capability</th><th>Answers at</th><th>What it is</th></tr></thead>
 <tbody>
 <tr><td>code</td><td>/v1/code</td><td>Search and symbols across your repos, for you and your agents.</td></tr>
@@ -341,7 +434,7 @@ and each is plain HTTP outside of one. The ones a coding session leans on:</p>
 <tr><td>platform</td><td>/v1/platform</td><td>Hanzo PaaS: deploy containers to your own tenant namespace — builds, releases, environments, logs, custom domains.</td></tr>
 <tr><td>deploy</td><td>/v1/deploy</td><td>Hanzo CD: see what each app is running, sync it, and roll back a bad release.</td></tr>
 </tbody>
-</table>
+</table></div>
 <p>That is nine of them. The CLI is generated from the same specification the API
 serves, so all <strong>182 products</strong> and <strong>2,379 operations</strong>
 are already subcommands of the binary you just installed —
@@ -402,14 +495,111 @@ is a documentation site that does not work.</p>
 </div>
 
 <script>
-// The one interaction on the page: put the install line on the clipboard.
+// Every agent registers an MCP server its own way, keeps skills in its own
+// directory, and confirms the attachment with its own command. One prompt per
+// agent, each one the thing that tool actually needs.
+var SETUP = {
+default: `Set up Hanzo in this repo.
+
+  curl -fsSL https://hanzo.sh | sh
+  hanzo auth login
+  hanzo keys create
+
+Attach the toolset over MCP at https://api.hanzo.ai/v1/mcp, sending
+Authorization: Bearer <the key you just minted>.
+
+Read https://hanzoskills.com/all.md, then tell me which Hanzo tools you can call.`,
+
+claude: `Set up Hanzo for Claude Code in this repo.
+
+  curl -fsSL https://hanzo.sh | sh
+  hanzo auth login
+  claude mcp add --transport http hanzo https://api.hanzo.ai/v1/mcp \\
+    --header "Authorization: Bearer $(hanzo keys create)"
+
+Skills go in ~/.claude/skills:
+
+  npx @hanzo/skill add hanzoai/skills
+
+Run /mcp to confirm hanzo is connected, then tell me which tools it exposes.`,
+
+codex: `Set up Hanzo for Codex in this repo.
+
+  curl -fsSL https://hanzo.sh | sh
+  hanzo auth login
+  export HANZO_API_KEY=$(hanzo keys create)
+  codex mcp add hanzo --url https://api.hanzo.ai/v1/mcp \\
+    --bearer-token-env-var HANZO_API_KEY
+
+Skills go in ~/.agents/skills:
+
+  npx @hanzo/skill add hanzoai/skills
+
+Run \`codex mcp list\` to confirm hanzo is registered, then tell me which tools
+it exposes.`,
+
+cursor: `Set up Hanzo for Cursor in this repo.
+
+  curl -fsSL https://hanzo.sh | sh
+  hanzo auth login
+  hanzo keys create
+
+Write .cursor/mcp.json:
+
+  {
+    "mcpServers": {
+      "hanzo": {
+        "url": "https://api.hanzo.ai/v1/mcp",
+        "headers": { "Authorization": "Bearer <key>" }
+      }
+    }
+  }
+
+Skills go in ~/.cursor/skills:
+
+  npx @hanzo/skill add hanzoai/skills
+
+Reload Cursor, then tell me which Hanzo tools you can call.`
+};
+
+function flash(el, msg){
+  var was = el.textContent;
+  el.textContent = msg;
+  setTimeout(function(){ el.textContent = was; }, 1600);
+}
+function put(text, el, msg){
+  navigator.clipboard.writeText(text).then(
+    function(){ flash(el, msg); },
+    function(){ flash(el, 'Press ⌘C'); });
+}
+
+var go = document.querySelector('.split .go'),
+    chev = document.querySelector('.split .chev'),
+    menu = document.querySelector('.menu');
+
+function shut(){ menu.removeAttribute('data-open'); chev.setAttribute('aria-expanded','false'); }
+chev.addEventListener('click', function(){
+  if (menu.hasAttribute('data-open')) return shut();
+  menu.setAttribute('data-open',''); chev.setAttribute('aria-expanded','true');
+});
+document.addEventListener('click', function(e){
+  if (!menu.contains(e.target) && !chev.contains(e.target)) shut();
+});
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') shut(); });
+
+document.querySelectorAll('[data-setup]').forEach(function(b){
+  b.addEventListener('click', function(){
+    var k = b.dataset.setup;
+    put(SETUP[k], go, k === 'default' ? 'Copied'
+        : 'Copied · ' + b.textContent.trim().replace(/^Open in /i, ''));
+    if (k !== 'default') shut();
+  });
+});
+
+// The install line.
 document.querySelectorAll('.copy').forEach(function(b){
   b.addEventListener('click', function(){
-    var t = document.querySelector(b.dataset.copy).textContent.trim();
-    navigator.clipboard.writeText(t).then(function(){
-      b.textContent = 'Copied';
-      setTimeout(function(){ b.textContent = 'Copy'; }, 1400);
-    }, function(){ b.textContent = 'Press ⌘C'; });
+    put(document.querySelector(b.dataset.copy).textContent.trim(), b, 'Copied');
   });
 });
 </script>

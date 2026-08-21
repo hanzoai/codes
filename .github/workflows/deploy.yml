@@ -50,7 +50,7 @@ jobs:
           # domain shipped a warm cream-and-orange page for a while; the check
           # exists so that cannot happen again quietly.
           bad=$(grep -ohE '#[0-9a-fA-F]{6}' public/index.html public/favicon.svg | sort -fu \
-                | grep -viE '^#(000000|ffffff|dddddd|f4f4f2|9c9c98|6a6a66|0a0a0a|232323|3a3a3a|d8d8d4|141414)$' || true)
+                | grep -viE '^#(000000|ffffff|dddddd|f4f4f2|9c9c98|7a7a75|0a0a0a|232323|3a3a3a|d8d8d4|141414)$' || true)
           [ -z "$bad" ] || { echo "::error::non-monochrome colour in the page: $bad"; exit 1; }
 
       - name: publish

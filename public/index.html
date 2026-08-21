@@ -21,7 +21,12 @@
    hairline rules only read on black, and inverting them washes both out.
    Every colour is painted explicitly so the page never borrows a host ground. */
 :root{
-  --ink:#f4f4f2; --soft:#9c9c98; --faint:#6a6a66; --ground:#000; --panel:#0a0a0a;
+  /* --faint is the dimmest thing that still carries words — section numerals,
+     table headers, the footer. It is one shade lighter than the same token on
+     hanzoskills.com, which measures 3.87:1 on black and 3.65:1 on the panel:
+     under WCAG AA for text at these sizes. This value clears 4.5:1 against both
+     grounds and still reads as the quietest voice on the page. */
+  --ink:#f4f4f2; --soft:#9c9c98; --faint:#7a7a75; --ground:#000; --panel:#0a0a0a;
   --line:#232323; --line-hi:#3a3a3a;
   --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
@@ -44,7 +49,7 @@ nav .in{max-width:60rem;margin:0 auto;padding:1.1rem 1.75rem;display:flex;
 nav .links{display:flex;flex-wrap:wrap;gap:.5rem 1.4rem;align-items:center}
 @media (max-width:26rem){nav .links{gap:.5rem .9rem}}
 nav a.up{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--soft);text-decoration:none}
+  text-transform:uppercase;color:var(--soft);text-decoration:none;white-space:nowrap}
 nav a.up:hover{color:var(--ink)}
 
 /* The dot field. One repeating radial-gradient faded along the diagonal by a
@@ -83,6 +88,8 @@ h1 em{font-style:normal;color:var(--faint)}
   padding-right:1.5rem}
 .strip code{background:none;border:0;padding:0;font-size:.78rem;color:var(--ink);
   letter-spacing:0;text-transform:none}
+/* Once the strip wraps, that divider has nothing left to divide. */
+@media (max-width:34rem){.strip b{border-right:0;padding-right:0}}
 .copy{margin-left:auto;font:inherit;font-size:.68rem;letter-spacing:.14em;
   text-transform:uppercase;color:var(--soft);background:transparent;
   border:1px solid var(--line-hi);padding:.42rem .8rem;cursor:pointer}
@@ -108,6 +115,8 @@ pre{background:var(--panel);border:1px solid var(--line);padding:1rem 1.1rem;
   overflow-x:auto;margin:0 0 1.25rem}
 pre code{background:none;border:0;padding:0;font-size:.82rem;line-height:1.9;
   display:block;white-space:pre}
+/* A comment must not read at the same weight as the command it annotates. */
+pre code .c{color:var(--faint)}
 hr{border:0;border-top:1px solid var(--line);margin:3.5rem 0 0}
 .lbl{font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;
   text-transform:uppercase;color:var(--faint);margin:0 0 .55rem}
@@ -120,8 +129,12 @@ hr{border:0;border-top:1px solid var(--line);margin:3.5rem 0 0}
 .term .c{color:var(--faint)}
 .term .o{color:var(--soft)}
 
-table{border-collapse:collapse;width:100%;margin:0 0 1.25rem;font-size:.9rem;
-  display:block;overflow-x:auto}
+/* min-width so a narrow screen scrolls the table rather than crushing the last
+   column to two words a line; tabindex on the element makes that scroll
+   reachable from the keyboard. */
+table{border-collapse:collapse;width:100%;min-width:36rem;margin:0 0 1.25rem;
+  font-size:.9rem;display:block;overflow-x:auto}
+table:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
 th,td{border:1px solid var(--line);padding:.55rem .75rem;text-align:left;vertical-align:top}
 th{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
   color:var(--faint);font-weight:400;white-space:nowrap}
@@ -140,7 +153,11 @@ footer a{color:var(--soft)}
 .fmap b{display:block;font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;
   text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 .6rem;
   border-bottom:1px solid var(--line);padding-bottom:.4rem}
-.fmap a{display:inline-block;color:var(--ink);text-decoration:none;margin:.3rem .35rem 0 0}
+/* One block per entry. Without it the link and its description are inline
+   siblings, so a column that wraps hands a description to the wrong link —
+   "billing.hanzo.ai top up" is a sentence nobody wrote. */
+.fmap span{display:block;margin:.3rem 0 0}
+.fmap a{color:var(--ink);text-decoration:none}
 .fmap a:hover{text-decoration:underline}
 .fmap div{color:var(--faint);line-height:1.5}
 .fend{border-top:1px solid var(--line);padding-top:1.25rem;font-size:.82rem}
@@ -311,7 +328,7 @@ same tools under the same identity and the same cap.</p>
 <p>These are capabilities of the cloud, not features of an editor. Each answers
 on its own path under <code>api.hanzo.ai</code>, each is a tool inside a session,
 and each is plain HTTP outside of one. The ones a coding session leans on:</p>
-<table>
+<table tabindex="0">
 <thead><tr><th>Capability</th><th>Answers at</th><th>What it is</th></tr></thead>
 <tbody>
 <tr><td>code</td><td>/v1/code</td><td>Search and symbols across your repos, for you and your agents.</td></tr>
@@ -365,19 +382,19 @@ is a documentation site that does not work.</p>
 <footer>
 <div class="fmap">
   <div><b>Build</b>
-    <a href="https://hanzo.app">hanzo.app</a> app builder
-    <a href="https://hanzo.codes">hanzo.codes</a> code with an agent
-    <a href="https://hanzoskills.com">hanzoskills.com</a> what an agent reads</div>
+    <span><a href="https://hanzo.app">hanzo.app</a> app builder</span>
+    <span><a href="https://hanzo.codes">hanzo.codes</a> code with an agent</span>
+    <span><a href="https://hanzoskills.com">hanzoskills.com</a> what an agent reads</span></div>
   <div><b>Run</b>
-    <a href="https://console.hanzo.ai">console.hanzo.ai</a> cloud console
-    <a href="https://api.hanzo.ai">api.hanzo.ai</a> the API</div>
+    <span><a href="https://console.hanzo.ai">console.hanzo.ai</a> cloud console</span>
+    <span><a href="https://api.hanzo.ai">api.hanzo.ai</a> the API</span></div>
   <div><b>Account</b>
-    <a href="https://hanzo.id">hanzo.id</a> sign in
-    <a href="https://pay.hanzo.ai">pay.hanzo.ai</a> top up
-    <a href="https://billing.hanzo.ai">billing.hanzo.ai</a> invoices and usage</div>
+    <span><a href="https://hanzo.id">hanzo.id</a> sign in</span>
+    <span><a href="https://pay.hanzo.ai">pay.hanzo.ai</a> top up</span>
+    <span><a href="https://billing.hanzo.ai">billing.hanzo.ai</a> invoices and usage</span></div>
   <div><b>Company</b>
-    <a href="https://hanzo.ai">hanzo.ai</a> canonical
-    <a href="https://hanzo.ventures">hanzo.ventures</a> ventures</div>
+    <span><a href="https://hanzo.ai">hanzo.ai</a> canonical</span>
+    <span><a href="https://hanzo.ventures">hanzo.ventures</a> ventures</span></div>
 </div>
 <div class="fend"><a href="/index.md">This page as plain text</a> · <a href="/llms.txt">Index for agents</a> · <a href="https://github.com/hanzoai/cli">Source of the CLI</a></div>
 </footer>

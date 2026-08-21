@@ -19,44 +19,41 @@ is the VS Code fork, not this. `hanzoai/web` is archived. So this repo is new, a
 the live page it replaces was rebuilt from what it served plus what the source
 says.
 
-## Two rules that are not obvious
+## Where this is served
 
-**1. Cloudflare prepends to robots.txt. It does not replace it.**
+**The Hanzo Sites plane, and Cloudflare is DNS/CDN only.**
 
-Measured on the live host after the first deploy: the served `/robots.txt` is our
-file with a `# BEGIN Cloudflare Managed content` block glued on **above** it. So
-the same document says both things —
+`public/` is published to `s3://hanzo-sites/hanzo/hanzo-codes` and served by the
+ingress `staticFiles` middleware. Apex and www both route to it. There is no
+Worker, no Pages project and no Cloudflare credential anywhere in this repo.
 
-```
-# BEGIN Cloudflare Managed content
-User-agent: *
-Content-Signal: search=yes,ai-train=no,use=reference
-...
-User-agent: ClaudeBot
-Disallow: /
-# END Cloudflare Managed Content
+Three things live outside this repo and are easy to look for in the wrong place:
 
-  (our file starts here)
-User-agent: *
-Content-Signal: search=yes, ai-input=yes, ai-train=yes
-...
-User-agent: ClaudeBot
-Allow: /
-```
+| What | Where |
+|---|---|
+| the route, and every response header | `universe` `charts/app/values/hanzo/static-sites.yaml` — `hanzo-codes-headers` in front of `hanzo-codes-static` |
+| the certificate (`*.hanzo.codes` + apex) | `universe` `infra/k8s/ingress/wildcard-certs.yaml` |
+| the three-call publish contract | `bin/site` in `hanzoai/ci` — enqueue, upload straight to S3, complete |
 
-Which of those a crawler honours is then a question about that crawler's parser,
-not about our intent. Most implementations merge same-agent groups and let the
-least restrictive rule win at equal path length, so `Allow: /` probably wins — but
-"probably" is not a position an AI company should take about whether AI may read
-its documentation, and the `ai-train=no` signal sits above ours regardless.
+**A `_headers` file is dead config here.** `staticFiles` reads objects out of S3
+and never reads one, so a header the site wants is a middleware in front of the
+static one or it does not exist. Same for `_redirects`.
 
-No change in this repo can remove that block. The zone setting can: Cloudflare
-dashboard → `hanzo.codes` → **AI Scrapers and Crawlers** → turn off the managed
-`robots.txt`. The deploy workflow's last step fetches the live file, fails, and
-names that fix, so the state cannot go quietly wrong again.
+**Two rules that are not obvious**
 
-`hanzo cloudflare zones list` answers `503 cloudflare is not connected for this
-org`, so this needs somebody with dashboard access.
+**1. Serving our own robots.txt is the point, not a detail.**
+
+On the Worker, Cloudflare's zone-level managed `robots.txt` was **prepended** to
+ours rather than replacing it, so one document said both things — a
+`# BEGIN Cloudflare Managed content` block carrying `Content-Signal: ai-train=no`
+and `ClaudeBot / Disallow: /` sitting immediately above our `ai-train=yes` and
+`Allow: /`. Which one a crawler honours is then a question about that crawler's
+parser rather than about our intent, and an AI company cannot leave that
+ambiguous. No change in this repo could remove it; the origin move did.
+
+The deploy workflow asserts it on every publish and fails naming the zone setting
+(`AI Scrapers and Crawlers` → managed `robots.txt`), because the thing that put
+it there is a zone setting and zone settings come back.
 
 **2. Claims are checked, not remembered.**
 
@@ -209,29 +206,38 @@ registers fourteen explicit sub-paths and no bare stem at all. Five false
 warnings per deploy is worse than no check, because it teaches everyone to skip
 the warnings that matter.
 
-## Why CI is in .github/workflows and not .hanzo/workflows
+## CI is native — `.hanzo/workflows`, on the forge
 
-The estate rule is that CI lives in `.hanzo/workflows` on the git.hanzo.ai runner
-fleet. The rule exists because the default runner label
-`hanzo-build-linux-amd64` is advertised only by forge runners, so a job asking
-for it on github.com waits out a 24-hour timeout instead of failing.
+`git.hanzo.ai/hanzoai/codes` is canonical and is what runs CI. It carries a push
+mirror OUT to `github.com/hanzoai/codes`, so **push to the forge and GitHub
+follows**; a push to GitHub alone runs nothing.
 
-Neither half of that applies here:
+Two files, and neither holds any build logic:
 
-- This workflow asks for `ubuntu-latest`, not the forge label, so it cannot hang
-  waiting for a runner that does not exist.
-- This repository exists **only** on GitHub. There is no forge mirror, so a file
-  under `.hanzo/workflows` would have no executor at all.
-- Deploying a Cloudflare assets Worker is not a container build. It needs
-  `wrangler deploy` and a Cloudflare token, and the only copy of that token is in
-  GitHub org secrets — proven, because the publish step succeeds.
+- `.hanzo/workflows/cicd.yml` — the ~7-line caller importing
+  `hanzoai/ci/.hanzo/workflows/build.yml@v1`, which runs `hanzo.yml`'s `test:`.
+- `.hanzo/workflows/deploy.yml` — the publish lane, which calls the shared
+  `site` action rather than transcribing its three calls.
 
-Measured: this workflow has published the live site repeatedly, 40-80s a run.
+`.hanzo/workflows` and **not** `.github/workflows`, for two independent reasons:
+the reusable exists at that path only, on both hosts, so a caller naming the
+`.github` path resolves nothing and never runs; and the forge collects workflows
+from the first of `WORKFLOW_DIRS` present in the pushed commit, so a
+`.github/workflows` beside this one would be dark config.
 
-The cautionary tale is `hanzoai/hanzo.sh`, whose `.github/workflows/deploy.yml`
-was deleted with the message "Actions are disabled on this repository, so these
-files cannot run". `gh api repos/hanzoai/hanzo.sh/actions/permissions` answers
-`{"enabled":true}`, and no `.hanzo/` directory exists on its `origin/main`. The
-premise was wrong and it left that host with no deploy path, which is the exact
-failure its own README warns about. Do not repeat it here without first checking
-that something can actually run the replacement.
+This repo held the opposite arrangement while it published a Cloudflare Worker,
+and the reasoning was sound at the time: `wrangler deploy` needs a Cloudflare
+token, the only copy lived in GitHub org secrets, and the repo had no forge
+copy. All three premises are gone — the plane needs no Cloudflare credential, and
+`hanzoai/codes` exists on the forge. Moving also ended a real defect: every run
+in this repo's GitHub history was `workflow_dispatch`, because pushes by the
+`hanzo-dev` identity trigger nothing there.
+
+**One gate, two callers.** `bin/gates` is the whole check, run by `hanzo.yml`'s
+`test:` on a pull request and again inside the job that PUBLISHES. Both, because
+workflows sharing a trigger do not order themselves — a red gate in `cicd.yml`
+cannot stop a publish in `deploy.yml`, so running it in the publishing job is the
+only placement that makes "nothing publishes ungated" true.
+
+Count marks with `grep -o '<svg' | wc -l`, never `grep -c`: that counts LINES,
+and the mark sheet puts several on one line. It reported 10 for a page with 24.

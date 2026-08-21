@@ -4,9 +4,9 @@ The coding surface of the Hanzo cloud: what `hanzo code` is, what it can reach,
 and how to install it.
 
 Static files, no build. `public/` **is** the site — what is committed is what a
-stranger is served. Published to Cloudflare as the assets-only Worker
-`hanzo-codes` by [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)
-on every push to `main`.
+stranger is served. Published to the Hanzo Sites plane by
+[`.hanzo/workflows/deploy.yml`](.hanzo/workflows/deploy.yml) on every push to
+`main`. Cloudflare is DNS and CDN only.
 
 ```
 public/
@@ -51,22 +51,19 @@ path now exists and delegates to `hanzo.sh`.
 
 ## Deploying
 
-Don't do it by hand. Push to `main`.
+Don't do it by hand. Push to `main` **on `git.hanzo.ai`** — that is what runs CI;
+GitHub is a mirror the forge writes to.
 
-The workflow publishes, purges the edge, then re-fetches the live host and fails
-unless the bytes being served are the bytes it just published — and separately
-asserts that a crawler reading `/robots.txt` is actually welcomed.
+`bin/gates` runs first, in the job that publishes, so nothing publishes ungated.
+Then the shared `site` action uploads `public/` to the plane. Then the workflow
+re-fetches the live host and fails unless the bytes being served are the bytes it
+just published, that both hostnames answer for every file, and that a crawler
+reading `/robots.txt` is actually welcomed.
 
-That last check currently **fails, correctly**. Cloudflare prepends a managed
-`robots.txt` block at the zone level that disallows ClaudeBot, GPTBot, CCBot,
-Google-Extended, Bytespider, Amazonbot, Applebot-Extended and meta-externalagent
-and signals `ai-train=no`, immediately above our file saying the opposite. No
-change here can remove it — the fix is Cloudflare dashboard → `hanzo.codes` →
-**AI Scrapers and Crawlers** → turn off the managed `robots.txt`. See
-[LLM.md](LLM.md).
-
-Break-glass: `npx wrangler@3 deploy`. Afterwards `main` and the live host are two
-different states again, so re-run the workflow.
+The route, the response headers and the certificate are not in this repo — they
+are `universe` (`charts/app/values/hanzo/static-sites.yaml` and
+`infra/k8s/ingress/wildcard-certs.yaml`). A `_headers` file here would be read by
+nothing. See [LLM.md](LLM.md).
 
 ## Related
 

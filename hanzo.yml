@@ -1,0 +1,17 @@
+# Canonical CI/CD config for hanzoai/codes — read by the shared hanzoai/ci
+# reusable workflow (.hanzo/workflows/cicd.yml) and by platform.hanzo.ai.
+#
+# NO `images:` and NO `deploy:`, deliberately. hanzo.codes is a static export
+# that ships to the Sites plane (.hanzo/workflows/deploy.yml), not a container
+# the operator reconciles. Declaring an image would build an artifact nothing
+# pulls; declaring a deploy would name an App CR that does not exist.
+#
+# `public/` is the artifact verbatim — no bundler, no package.json, nothing to
+# compile — so the whole gate is the one script both lanes call.
+
+test:
+  - name: gates
+    run: bin/gates public
+
+kms:
+  org: hanzo

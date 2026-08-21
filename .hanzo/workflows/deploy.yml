@@ -1,0 +1,117 @@
+name: deploy
+
+# A SITE IS NOT AN APP.
+#
+# hanzo.codes is one hand-written page and its machine-readable twins. It gets
+# no container image, no App CR, no replicas and no operator reconcile. It goes
+# to the Sites plane, which exists for exactly this shape:
+#
+#   POST /v1/projects/hanzo-codes/deployments      (202, an upload grant)
+#   POST the objects straight to S3                (the bytes skip the API)
+#   POST .../deployments/<id>/complete             (live; prunes what went)
+#
+# The mechanics are NOT transcribed here; they are `bin/site` in hanzoai/ci,
+# because hanzo.ai, hanzo.works, hips and computer make the identical three
+# calls and a contract copied per repo is a contract that drifts. The action
+# self-provisions the project idempotently, so committing this file is enough to
+# stand the site up the first time.
+#
+# ONE credential, and it is not a bucket key. The 202 carries a prefix-scoped,
+# 30-minute presigned POST grant. Do NOT add SITES_S3_* — that is the standing
+# shared-bucket credential the grant replaced, and it could overwrite every
+# other org's site.
+#
+# There is no build step and there is no `out/`: public/ IS the export.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/**'
+      - 'bin/gates'
+      - '.hanzo/workflows/deploy.yml'
+  workflow_dispatch:
+
+concurrency:
+  # Never cancel a publish in flight: a half-uploaded prefix is a broken site.
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  site:
+    runs-on: hanzo-build-linux-amd64
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # In the job that publishes, so nothing publishes ungated.
+      - name: Gates
+        run: bin/gates public
+
+      - name: Publish to the Sites plane
+        uses: https://git.hanzo.ai/hanzoai/ci/.github/actions/site@v1
+        with:
+          slug: hanzo-codes
+          dir: public
+        env:
+          KMS_CLIENT_ID: ${{ secrets.KMS_CLIENT_ID }}
+          KMS_CLIENT_SECRET: ${{ secrets.KMS_CLIENT_SECRET }}
+
+      # bin/site reads its own liveUrl back, which proves the object store
+      # serves the bytes. It says nothing about what a READER gets, and the two
+      # differ by the whole edge: Cloudflare fronts this host, so a fresh
+      # publish is not a fresh response.
+      - name: The host serves the bytes we just published
+        run: |
+          set -euo pipefail
+          want=$(md5sum public/index.html | cut -d' ' -f1)
+          for _ in $(seq 1 30); do
+            got=$(curl -sS https://hanzo.codes | md5sum | cut -d' ' -f1)
+            [ "$got" = "$want" ] && break
+            sleep 10
+          done
+          echo "built $want / live $got"
+          [ "$got" = "$want" ] || { echo "::error::hanzo.codes is serving different bytes than were just published"; exit 1; }
+
+      - name: Every companion answers, on both hostnames
+        run: |
+          set -euo pipefail
+          for host in hanzo.codes www.hanzo.codes; do
+            for p in "" robots.txt llms.txt index.md sitemap.xml favicon.svg og.png install; do
+              code=$(curl -sS -o /dev/null -w '%{http_code}' "https://$host/$p")
+              echo "$host/$p -> $code"
+              [ "$code" = 200 ] || { echo "::error::https://$host/$p answered $code"; exit 1; }
+            done
+          done
+
+      # THE POINT OF THE MIGRATION, and the one thing a file in git cannot
+      # settle by itself. On the Worker this host served a zone-level managed
+      # robots.txt PREPENDED above ours — `Content-Signal: ai-train=no` and
+      # `ClaudeBot / Disallow: /` sitting immediately over our `ai-train=yes`
+      # and `Allow: /`, so which one a crawler honoured was a question about its
+      # parser rather than about our intent. An AI company cannot leave that
+      # ambiguous, and no change in this repo could remove it.
+      #
+      # Serving from our own plane does. Asserted on every publish, because the
+      # thing that put it there is a zone setting and zone settings come back.
+      - name: Crawlers are actually welcome
+        run: |
+          set -euo pipefail
+          curl -sS https://hanzo.codes/robots.txt -o /tmp/robots.txt
+
+          ! grep -q 'BEGIN Cloudflare Managed content' /tmp/robots.txt || {
+            echo "::error::a managed robots.txt is being prepended again, disallowing ClaudeBot, GPTBot, CCBot, Google-Extended, Bytespider, Amazonbot, Applebot-Extended and meta-externalagent, and signalling ai-train=no over our ai-train=yes."
+            echo "::error::Fix: Cloudflare dashboard -> hanzo.codes -> AI Scrapers and Crawlers -> turn the managed robots.txt off. No change in this repo can override it."
+            exit 1; }
+
+          grep -q 'ai-train=yes' /tmp/robots.txt || {
+            echo "::error::our robots.txt is not what the host is serving"; exit 1; }
+
+          fail=0
+          for bot in ClaudeBot GPTBot CCBot Google-Extended Bytespider Amazonbot meta-externalagent Applebot-Extended PerplexityBot; do
+            if awk -v b="$bot" 'BEGIN{IGNORECASE=1} $0 ~ "^User-agent:[[:space:]]*"b"[[:space:]]*$" {f=1;next} /^User-agent:/{f=0} f && /^Disallow:[[:space:]]*\/[[:space:]]*$/ {found=1} END{exit !found}' /tmp/robots.txt; then
+              echo "::error::$bot is disallowed somewhere in the live robots.txt"; fail=1
+            fi
+          done
+          [ "$fail" = 0 ] || { echo "--- what the host actually serves ---"; cat /tmp/robots.txt; exit 1; }
+          echo "hanzo.codes welcomes every named crawler, from ${GITHUB_SHA:0:8}"

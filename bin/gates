@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# gates — what must be true about the export before it is published.
+#
+# ONE implementation, TWO callers: hanzo.yml's `test:` runs it on a pull
+# request, and .hanzo/workflows/deploy.yml runs it inside the job that
+# PUBLISHES. Both, because workflows sharing a trigger do not order themselves,
+# so a red gate in one cannot stop a publish in the other — running it in the
+# publishing job is the only placement that makes "nothing publishes ungated"
+# true, and running it on a PR is what makes it cheap to fix.
+#
+# No toolchain. `public/` is the deployed artifact verbatim: 40KB of
+# hand-written HTML with the CSS inline, no bundler, no package.json. Anything
+# here that needed a build step would be a way for the repo and the live site
+# to disagree, which is the one failure this repo exists to prevent.
+set -euo pipefail
+
+dir="${1:-public}"
+cd "$(dirname "$0")/.."
+
+fail=0
+say() { printf '%s\n' "$*"; }
+bad() { echo "::error::$*"; fail=1; }
+
+# ── the page is whole ────────────────────────────────────────────────────────
+test -s "$dir/index.html" || { bad "$dir/index.html is missing or empty"; exit 1; }
+grep -q '<title>Hanzo Codes</title>' "$dir/index.html" || bad "the page lost its title"
+
+for f in index.md llms.txt sitemap.xml favicon.svg og.png robots.txt install; do
+  test -s "$dir/$f" || bad "$dir/$f is missing or empty"
+done
+
+# The install one-liner is piped straight into a shell by anyone who trusts us,
+# so it is parsed rather than assumed. dash, not bash: `curl … | sh` is /bin/sh
+# on a Debian box, and bash accepts syntax dash refuses.
+dash -n "$dir/install" || bad "$dir/install is not valid POSIX shell"
+
+# ── crawlers are welcome, in the bytes we ship ───────────────────────────────
+# Whether the HOST serves this unmodified is a different question, asked after
+# the publish. This one is about our own file.
+grep -q 'ai-train=yes' "$dir/robots.txt" || bad "robots.txt stopped signalling ai-train=yes"
+! grep -qE '^Disallow: /$' "$dir/robots.txt" || bad "robots.txt carries a blanket Disallow"
+
+# ── the palette is monochrome ────────────────────────────────────────────────
+# @hanzo/tokens is a zero-saturation ramp and @hanzo/brand paints dark. This
+# domain shipped a cream-and-orange page for a while; the check is what keeps a
+# stray accent colour from going out quietly.
+bad_hex=$(grep -ohE '#[0-9a-fA-F]{6}' "$dir/index.html" "$dir/favicon.svg" | sort -fu \
+  | grep -viE '^#(000000|ffffff|dddddd|f4f4f2|9c9c98|7a7a75|0a0a0a|232323|3a3a3a|d8d8d4|141414)$' || true)
+[ -z "$bad_hex" ] || bad "non-monochrome colour in the page: $bad_hex"
+
+# ── the marks and the setup control survived an edit ─────────────────────────
+# Counted, not eyeballed. The page's whole value is the 24 marks and the
+# per-agent prompt menu; an edit that silently drops them still renders.
+# -o piped to wc, never `grep -c`: that counts LINES, and the mark sheet puts
+# several <svg> on one line. It reported 10 for a page carrying 24.
+svgs=$(grep -o '<svg' "$dir/index.html" | wc -l)
+[ "$svgs" -ge 24 ] || bad "only $svgs <svg> in the page — the marks were 24"
+grep -q 'data-copy' "$dir/index.html" || bad "the copy control lost its data-copy target"
+
+# ── the one address on the page that is genuinely in doubt ───────────────────
+# HIP-0139 §2.4 wants singular capability names, so `sandboxes` is expected to
+# become `sandbox` and this page would then print a dead address. A warning, not
+# a gate: it is a question about someone else's router, asked on our schedule.
+#
+# Probing every stem was the obvious check and the wrong one — a prefix-only app
+# has no handler at its own root, so /v1/code, /v1/git, /v1/platform, /v1/deploy
+# and /v1/lsp answer 404 while being entirely alive underneath. Five false
+# warnings a deploy teaches everyone to ignore warnings. This asks the one where
+# 404-vs-refusal IS the signal: 401/403 means the route is there and wants a
+# credential, 404 means it is not.
+one=$(curl -s -o /dev/null -m 10 -w '%{http_code}' https://api.hanzo.ai/v1/sandbox   || echo 000)
+many=$(curl -s -o /dev/null -m 10 -w '%{http_code}' https://api.hanzo.ai/v1/sandboxes || echo 000)
+say "/v1/sandbox -> $one    /v1/sandboxes -> $many"
+case "$one:$many" in
+  404:40*)      say "unchanged: the plural is still the live address" ;;
+  40[13]:404)   echo "::warning::the rename landed — /v1/sandbox answers and /v1/sandboxes is gone. Change the copy in $dir/index.html, $dir/index.md and $dir/llms.txt." ;;
+  40[13]:40[13]) echo "::warning::both spellings answer, so the copy should move to the singular /v1/sandbox." ;;
+  *)            say "notice: inconclusive ($one/$many), ignoring" ;;
+esac
+
+[ "$fail" = 0 ] || exit 1
+say "gates pass: $(find "$dir" -type f | wc -l) files, $svgs marks, monochrome"

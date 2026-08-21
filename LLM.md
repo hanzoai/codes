@@ -123,9 +123,17 @@ curl -o /dev/null -w '%{http_code}' api.hanzo.ai/v1/sandboxes  -> 403
 plural alias in the router either — `grep -nE 'plural|singular|TrimSuffix' manifest/`
 finds two comments and no code.
 
-The page therefore prints `sandboxes`, and the deploy workflow probes all nine
-addresses on every publish and warns on any 404. When the rename lands, the
-deploy says so. Do not "fix" the copy from a doc — re-run the probe.
+The page therefore prints `sandboxes`, and the deploy workflow watches that one
+pair on every publish: it warns when `/v1/sandbox` starts answering, or when the
+plural stops. When the rename lands, the deploy says so. Do not "fix" the copy
+from a doc — re-run the probe.
+
+Probing all nine stems was tried first and removed. A prefix-only app has no
+handler at its own root, so `/v1/code`, `/v1/git`, `/v1/platform`, `/v1/deploy`
+and `/v1/lsp` answer 404 while being entirely alive underneath — `deploy`
+registers fourteen explicit sub-paths and no bare stem at all. Five false
+warnings per deploy is worse than no check, because it teaches everyone to skip
+the warnings that matter.
 
 ## Why CI is in .github/workflows and not .hanzo/workflows
 

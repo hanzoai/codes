@@ -110,10 +110,10 @@ plain HTTP outside of one. The ones a coding session leans on:
 | platform | `/v1/platform` | Hanzo PaaS: deploy containers to your own tenant namespace — builds, releases, environments, logs, custom domains. |
 | deploy | `/v1/deploy` | Hanzo CD: see what each app is running, sync it, and roll back a bad release. |
 
-That is nine of **122**. And the CLI is generated from the same specification the
-API serves — **2,379 operations across 182 products** are already subcommands of
-the binary you just installed, so `hanzo <product> <verb>` works for all of them
-with no plugin to add and no release to wait for.
+That is nine of them. The CLI is generated from the same specification the API
+serves, so all **182 products** and **2,379 operations** are already subcommands
+of the binary you just installed — `hanzo <product> <verb>`, with no plugin to
+add and no release to wait for.
 
 ## Push, and it ships
 

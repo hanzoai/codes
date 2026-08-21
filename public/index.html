@@ -35,13 +35,14 @@ body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
 
 nav{border-bottom:1px solid var(--line);position:relative;z-index:2}
 nav .in{max-width:60rem;margin:0 auto;padding:1.1rem 1.75rem;display:flex;
-  justify-content:space-between;align-items:center;gap:1rem}
+  flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.6rem 1rem}
 .brand{font-family:var(--mono);font-size:.85rem;letter-spacing:.14em;
   text-transform:uppercase;color:var(--ink);text-decoration:none;
   display:inline-flex;align-items:center;gap:.6rem}
 .brand i{font-style:normal;color:var(--faint)}
 .brand svg{width:15px;height:15px;display:block;flex:none}
-nav .links{display:flex;gap:1.4rem;align-items:center}
+nav .links{display:flex;flex-wrap:wrap;gap:.5rem 1.4rem;align-items:center}
+@media (max-width:26rem){nav .links{gap:.5rem .9rem}}
 nav a.up{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;
   text-transform:uppercase;color:var(--soft);text-decoration:none}
 nav a.up:hover{color:var(--ink)}

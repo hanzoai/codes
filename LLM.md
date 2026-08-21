@@ -103,3 +103,53 @@ because the CSP on a static Worker gives nothing for free.
 
 If the mark changes upstream, re-copy from `/home/z/work/hanzo/logo/dist/` and
 `/home/z/work/hanzo/logo/svg/`. Do not redraw the paths by hand.
+
+## The capability names, and why the plural is still here
+
+HIP-0139 §2.4 "refuses a pair differing only in number and keeps the singular",
+and it is quoted in `manifest/apps.go` itself where `bot`/`bots` were folded into
+one singular row. The direction is settled: capability names go singular.
+
+It has **not** landed for sandbox. Measured, not read:
+
+```
+gh api repos/hanzo-inc/cloud/contents/manifest/apps.go   -> {Name: "sandboxes", Prefixes: []string{"/v1/sandboxes"}}
+curl -o /dev/null -w '%{http_code}' api.hanzo.ai/v1/sandbox    -> 404
+curl -o /dev/null -w '%{http_code}' api.hanzo.ai/v1/sandboxes  -> 403
+```
+
+403 means the route exists and wants a credential. 404 means nothing is there. So
+`/v1/sandbox` on this page would be a dead address, and there is no mechanical
+plural alias in the router either — `grep -nE 'plural|singular|TrimSuffix' manifest/`
+finds two comments and no code.
+
+The page therefore prints `sandboxes`, and the deploy workflow probes all nine
+addresses on every publish and warns on any 404. When the rename lands, the
+deploy says so. Do not "fix" the copy from a doc — re-run the probe.
+
+## Why CI is in .github/workflows and not .hanzo/workflows
+
+The estate rule is that CI lives in `.hanzo/workflows` on the git.hanzo.ai runner
+fleet. The rule exists because the default runner label
+`hanzo-build-linux-amd64` is advertised only by forge runners, so a job asking
+for it on github.com waits out a 24-hour timeout instead of failing.
+
+Neither half of that applies here:
+
+- This workflow asks for `ubuntu-latest`, not the forge label, so it cannot hang
+  waiting for a runner that does not exist.
+- This repository exists **only** on GitHub. There is no forge mirror, so a file
+  under `.hanzo/workflows` would have no executor at all.
+- Deploying a Cloudflare assets Worker is not a container build. It needs
+  `wrangler deploy` and a Cloudflare token, and the only copy of that token is in
+  GitHub org secrets — proven, because the publish step succeeds.
+
+Measured: this workflow has published the live site repeatedly, 40-80s a run.
+
+The cautionary tale is `hanzoai/hanzo.sh`, whose `.github/workflows/deploy.yml`
+was deleted with the message "Actions are disabled on this repository, so these
+files cannot run". `gh api repos/hanzoai/hanzo.sh/actions/permissions` answers
+`{"enabled":true}`, and no `.hanzo/` directory exists on its `origin/main`. The
+premise was wrong and it left that host with no deploy path, which is the exact
+failure its own README warns about. Do not repeat it here without first checking
+that something can actually run the replacement.

@@ -1,0 +1,20 @@
+# hanzo.codes — assets-only Worker, no build step.
+#
+# A Worker rather than a Pages project for the same reason hanzo.sh is one: the
+# account is at its Pages project limit. There is nothing to compile here — the
+# files in public/ are the site, byte for byte, and what is in git is what a
+# stranger gets.
+#
+# Publishing is .github/workflows/deploy.yml, which re-fetches the live host and
+# fails unless the bytes it just published are the bytes being served. Do not
+# publish by hand: hand-publishing is how main and the live host become two
+# different states with nothing to notice the difference.
+name = "hanzo-codes"
+compatibility_date = "2026-07-01"
+
+[assets]
+directory = "public"
+
+routes = [
+  { pattern = "hanzo.codes", custom_domain = true }
+]

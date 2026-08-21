@@ -1,0 +1,93 @@
+# hanzo.codes — documentation for people and for machines.
+#
+# We build AI. Reading this site with one is the point. Every crawler named
+# below is welcome on every path, and so is every crawler not named below.
+#
+# Content signals (https://contentsignals.org) express what you may do with
+# what you collect. Ours are all yes:
+#
+#   search:   building a search index and returning links and excerpts.
+#   ai-input: feeding content to a model at answer time — RAG, grounding,
+#             generative search answers.
+#   ai-train: training or fine-tuning models.
+#
+# There is a plain-markdown mirror of this whole site — see /llms.txt. Fetch
+# that instead of parsing HTML; it is smaller and it is the same content.
+
+User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: DuckAssistBot
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Timpibot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+Sitemap: https://hanzo.codes/sitemap.xml

@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hanzo Codes</title>
+<meta name="description" content="Describe the work. Hanzo does it in your repo, on your machine, against your tests. One binary, the whole toolset attached, the same API with or without a terminal.">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://hanzo.codes/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Hanzo Codes">
+<meta property="og:title" content="Hanzo Codes">
+<meta property="og:description" content="Describe the work. Hanzo does it in your repo, on your machine, against your tests.">
+<meta property="og:url" content="https://hanzo.codes/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:site" content="@hanzoai">
+<style>
+/* One visual world, deliberately: a dark instrument panel, monochrome to the
+   last value. The palette is the Hanzo brand palette — @hanzo/tokens is a
+   zero-saturation zinc ramp, hsl(0 0% n), and @hanzo/brand paints dark as
+   #000 ground / #fff accent. There is no light variant: the dot field and the
+   hairline rules only read on black, and inverting them washes both out.
+   Every colour is painted explicitly so the page never borrows a host ground. */
+:root{
+  --ink:#f4f4f2; --soft:#9c9c98; --faint:#6a6a66; --ground:#000; --panel:#0a0a0a;
+  --line:#232323; --line-hi:#3a3a3a;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:60rem;margin:0 auto;padding:0 1.75rem}
+
+nav{border-bottom:1px solid var(--line);position:relative;z-index:2}
+nav .in{max-width:60rem;margin:0 auto;padding:1.1rem 1.75rem;display:flex;
+  justify-content:space-between;align-items:center;gap:1rem}
+.brand{font-family:var(--mono);font-size:.85rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink);text-decoration:none;
+  display:inline-flex;align-items:center;gap:.6rem}
+.brand i{font-style:normal;color:var(--faint)}
+.brand svg{width:15px;height:15px;display:block;flex:none}
+nav .links{display:flex;gap:1.4rem;align-items:center}
+nav a.up{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--soft);text-decoration:none}
+nav a.up:hover{color:var(--ink)}
+
+/* The dot field. One repeating radial-gradient faded along the diagonal by a
+   mask, so it reads as a wave rather than as wallpaper. */
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+.hero::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(var(--line-hi) 1px, transparent 1px);
+  background-size:7px 7px;
+  -webkit-mask-image:linear-gradient(115deg,#000 0%,rgba(0,0,0,.55) 38%,transparent 72%);
+  mask-image:linear-gradient(115deg,#000 0%,rgba(0,0,0,.55) 38%,transparent 72%);
+  pointer-events:none}
+.hero .wrap{position:relative;padding-top:5rem;padding-bottom:4rem}
+.mark{width:44px;height:44px;display:block;margin:0 0 2rem}
+
+h1{font-family:var(--mono);font-size:clamp(2rem,5.4vw,3.4rem);line-height:1.12;
+  letter-spacing:-.02em;margin:0 0 1.1rem;font-weight:500;text-wrap:balance}
+h1 em{font-style:normal;color:var(--faint)}
+.lede{color:var(--soft);font-size:1.05rem;max-width:54ch;margin:0 0 2.25rem}
+
+.btns{display:flex;flex-wrap:wrap;gap:.7rem}
+.btn{display:inline-block;font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;
+  text-transform:uppercase;padding:.8rem 1.3rem;border:1px solid var(--line-hi);
+  color:var(--ink);text-decoration:none;background:transparent}
+.btn:hover{background:#141414;text-decoration:none;border-color:var(--soft)}
+.btn.solid{background:var(--ink);color:#000;border-color:var(--ink)}
+.btn.solid:hover{background:#d8d8d4}
+.btn:focus-visible{outline:1px solid var(--ink);outline-offset:3px}
+
+/* The install strip: the one line most visitors came for, and a button that
+   puts it on the clipboard. */
+.strip{border-bottom:1px solid var(--line);background:var(--panel)}
+.strip .in{max-width:60rem;margin:0 auto;padding:1rem 1.75rem;display:flex;
+  align-items:center;gap:1.5rem;flex-wrap:wrap;font-family:var(--mono);font-size:.72rem;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.strip b{color:var(--soft);font-weight:400;border-right:1px solid var(--line);
+  padding-right:1.5rem}
+.strip code{background:none;border:0;padding:0;font-size:.78rem;color:var(--ink);
+  letter-spacing:0;text-transform:none}
+.copy{margin-left:auto;font:inherit;font-size:.68rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--soft);background:transparent;
+  border:1px solid var(--line-hi);padding:.42rem .8rem;cursor:pointer}
+.copy:hover{color:var(--ink);border-color:var(--soft)}
+.copy:focus-visible{outline:1px solid var(--ink);outline-offset:2px}
+
+section{padding:3.5rem 0 0}
+h2{font-family:var(--mono);font-size:1.1rem;letter-spacing:-.01em;margin:0 0 .75rem;font-weight:500}
+h2 .n{color:var(--faint);margin-right:.7rem}
+h3{font-size:1rem;margin:0 0 .35rem;font-weight:600}
+p{margin:0 0 1rem;max-width:70ch;color:var(--soft)}
+p.tight{margin-bottom:.5rem}
+p strong{color:var(--ink);font-weight:600}
+ul{margin:0 0 1rem;padding-left:1.35rem;max-width:70ch;color:var(--soft)}
+li{margin:.22rem 0}
+a{color:var(--ink);text-decoration:underline;text-underline-offset:3px;
+  text-decoration-color:var(--line-hi)}
+a:hover{text-decoration-color:var(--ink)}
+a:focus-visible{outline:1px solid var(--ink);outline-offset:3px}
+code{font-family:var(--mono);font-size:.85em;background:var(--panel);
+  border:1px solid var(--line);border-radius:3px;padding:.1em .36em;color:var(--ink)}
+pre{background:var(--panel);border:1px solid var(--line);padding:1rem 1.1rem;
+  overflow-x:auto;margin:0 0 1.25rem}
+pre code{background:none;border:0;padding:0;font-size:.82rem;line-height:1.9;
+  display:block;white-space:pre}
+hr{border:0;border-top:1px solid var(--line);margin:3.5rem 0 0}
+.lbl{font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--faint);margin:0 0 .55rem}
+
+/* A transcript, not a screenshot: real text, selectable and copyable. */
+.term{background:var(--panel);border:1px solid var(--line);padding:1.1rem 1.2rem;
+  font-family:var(--mono);font-size:.82rem;line-height:1.9;overflow-x:auto;margin:0 0 1.25rem}
+.term div{white-space:pre}
+.term .p{color:var(--faint)}
+.term .c{color:var(--faint)}
+.term .o{color:var(--soft)}
+
+table{border-collapse:collapse;width:100%;margin:0 0 1.25rem;font-size:.9rem;
+  display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:.55rem .75rem;text-align:left;vertical-align:top}
+th{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--faint);font-weight:400;white-space:nowrap}
+td:first-child,td:nth-child(2){font-family:var(--mono);font-size:.82rem;white-space:nowrap}
+td:nth-child(2){color:var(--soft)}
+td:last-child{color:var(--soft)}
+
+.grid{display:grid;gap:2rem;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));margin:1.75rem 0 0}
+.grid p{font-size:.94rem;margin:0}
+
+footer{margin-top:4rem;padding:2rem 0 4rem;border-top:1px solid var(--line);
+  color:var(--faint);font-size:.85rem}
+footer a{color:var(--soft)}
+.fmap{display:grid;gap:1.75rem;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));
+  margin:0 0 2rem;font-size:.85rem}
+.fmap b{display:block;font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 .6rem;
+  border-bottom:1px solid var(--line);padding-bottom:.4rem}
+.fmap a{display:inline-block;color:var(--ink);text-decoration:none;margin:.3rem .35rem 0 0}
+.fmap a:hover{text-decoration:underline}
+.fmap div{color:var(--faint);line-height:1.5}
+.fend{border-top:1px solid var(--line);padding-top:1.25rem;font-size:.82rem}
+</style>
+<link rel="alternate" type="text/markdown" href="/index.md">
+</head>
+<!-- Reading this with a machine? This page is also plain markdown.
+     This one: https://hanzo.codes/index.md
+     Index:    https://hanzo.codes/llms.txt
+     Corpus:   https://hanzoskills.com/all.md
+     Crawlers are welcome here — see /robots.txt. -->
+<body>
+
+<nav><div class="in">
+  <a class="brand" href="/">
+    <svg viewBox="0 0 67 67" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="#f4f4f2">
+      <path d="M22.21 0H0V22.3184H22.21V0Z"/>
+      <path d="M66.7198 0H44.5098V22.3184H66.7198V0Z"/>
+      <path d="M66.7038 22.3184H22.2534L0.0878906 44.6367H44.4634L66.7038 22.3184Z"/>
+      <path d="M22.21 67V44.6369H0V67H22.21Z"/>
+      <path d="M66.7198 67V44.6369H44.5098V67H66.7198Z"/>
+    </svg>HANZO<i>CODES</i></a>
+  <span class="links">
+    <a class="up" href="https://hanzoskills.com">skills</a>
+    <a class="up" href="https://hanzo.id">sign in</a>
+    <a class="up" href="https://hanzo.ai">hanzo.ai</a>
+  </span>
+</div></nav>
+
+<div class="hero"><div class="wrap">
+
+  <!-- The mark, from @hanzo/logo — origami fold-in on load, one turn on hover,
+       squash on press. Pure CSS, no script, and it holds still for anyone who
+       asked their OS to stop moving things. -->
+  <svg class="mark" role="img" aria-label="Hanzo" viewBox="0 0 67 67" xmlns="http://www.w3.org/2000/svg">
+  <style>.o{fill:#f4f4f2;opacity:0;transform-box:fill-box;transform-origin:left center;animation:fold .42s cubic-bezier(.16,1,.3,1) forwards}
+  @keyframes fold{from{opacity:0;transform:perspective(320px) rotateY(90deg)}to{opacity:1;transform:none}}
+  .o0{animation-delay:0s}.o1{animation-delay:.06s}.o2{animation-delay:.12s}.o3{animation-delay:.18s}.o4{animation-delay:.24s}
+  .hov{transform-box:view-box;transform-origin:33.5px 33.5px}
+  .prs{transform-box:view-box;transform-origin:33.5px 33.5px;transition:transform .22s cubic-bezier(.22,1,.36,1)}
+  svg:hover .hov{animation:turn .85s cubic-bezier(.45,0,.2,1)}
+  svg:active .prs{transform:scale(.92)}
+  @keyframes turn{0%{transform:perspective(300px) rotateY(0)}100%{transform:perspective(300px) rotateY(360deg)}}
+  @media (prefers-reduced-motion:reduce){.hov,.prs{animation:none!important;transform:none!important}.o{opacity:1;animation:none;transform:none}}
+  </style>
+  <g class="hov"><g class="prs">
+  <path class="o o0" d="M22.21 0H0V22.3184H22.21V0Z"/>
+  <path class="o o1" d="M66.7198 0H44.5098V22.3184H66.7198V0Z"/>
+  <path class="o o2" d="M66.7038 22.3184H22.2534L0.0878906 44.6367H44.4634L66.7038 22.3184Z"/>
+  <path class="o o3" d="M22.21 67V44.6369H0V67H22.21Z"/>
+  <path class="o o4" d="M66.7198 67V44.6369H44.5098V67H66.7198Z"/>
+  </g></g>
+  </svg>
+
+  <h1>Describe the work.<br>Hanzo does it in your repo.<br><em>Against your tests.</em></h1>
+  <p class="lede">One binary. Your files, your git, your credentials. The whole Hanzo
+  toolset is attached the moment a session starts, and every tool in it is an
+  ordinary API call — so the same work runs with a terminal or without one.</p>
+  <div class="btns">
+    <a class="btn solid" href="#install">Install</a>
+    <a class="btn" href="#tools">What it can reach</a>
+    <a class="btn" href="https://hanzoskills.com">Docs for agents</a>
+  </div>
+</div></div>
+
+<div class="strip"><div class="in">
+  <b>Install</b>
+  <code id="one">curl -fsSL https://hanzo.sh | sh</code>
+  <button class="copy" data-copy="#one">Copy</button>
+</div></div>
+
+<div class="wrap">
+
+<section id="install">
+<h2><span class="n">01</span>Install</h2>
+<p>Two ways in. The script needs nothing you do not already have; the second
+exists because you may already live there.</p>
+<pre><code>curl -fsSL https://hanzo.sh | sh       <span class="c"># no runtime required</span>
+npm install -g hanzo                   <span class="c"># if node is already there</span></code></pre>
+<p>Both land the same binary. It is written in Rust and it is one file — no
+daemon to run, no container to pull, and nothing to keep current but the file
+itself. The npm package is a downloader around that same binary, not a second
+implementation of it.</p>
+</section>
+
+<hr>
+
+<section id="session">
+<h2><span class="n">02</span>A session</h2>
+<p>Say what you want in the words you would use for a colleague. A trailing task
+runs headless; leave it off and you get an interactive session instead. The
+command name is optional — <code>hanzo</code> with a task is already a session.</p>
+<div class="term">
+<div><span class="p">$</span> hanzo code "the metered list gates a surface nobody bills"</div>
+<div class="c">  reading spend.go, manifest/apps.go, plugin/…</div>
+<div class="c">  apps/auto was deleted; /v1/auto routes to automations</div>
+<div class="c">  removed the entry, ran the guard test</div>
+<div class="o">  ok  github.com/hanzoai/cloud  45.4s</div>
+</div>
+<p>An agent that pattern-matches your prompt onto a plausible diff will hand you
+something that compiles and is wrong. This one goes and looks — at the routing
+table, at the deleted package, at what the test actually asserts — and when the
+evidence contradicts the request, it says so instead of shipping.</p>
+
+<div class="grid">
+  <div><h3>Your machine</h3><p>Your files, your git, your credentials. Nothing is
+  uploaded to be indexed, and nothing is written that you did not see.</p></div>
+  <div><h3>Your tests are the judge</h3><p>Not a confidence score. It runs them,
+  shows the output, and a red suite is reported red.</p></div>
+  <div><h3>It stops</h3><p>On anything hard to reverse — a force push, a
+  production deploy, a rotated secret — it hands the decision back.</p></div>
+</div>
+</section>
+
+<hr>
+
+<section id="agent">
+<h2><span class="n">03</span>Bring your own agent</h2>
+<p>The session is the product; the model inside it is your choice. Our
+<code>dev</code> agent runs by default, and naming another is one word. Whichever
+you pick gets the same toolset, the same identity and the same meter — so the
+bill, the audit trail and the tools do not change when the model does.</p>
+<pre><code>hanzo code                             <span class="c"># dev, the default</span>
+hanzo code claude
+hanzo code codex
+hanzo dev                              <span class="c"># shorthand for `hanzo code dev`</span>
+hanzo desktop                          <span class="c"># the same session, aimed at the desktop</span></code></pre>
+<p>Model calls route through <code>api.hanzo.ai</code>, which is how a run can be
+metered and streamed at all. <code>--no-route</code> sends them to the backend's
+own account instead, and you get an unmetered session.</p>
+</section>
+
+<hr>
+
+<section id="tools">
+<h2><span class="n">04</span>The tools are already attached</h2>
+<p>A session starts with the Hanzo toolset connected. There is no extension to
+install, no config file to edit and nothing to restart — read, write, search,
+run, and the capabilities in the table below are simply <em>there</em>. If you
+want a bare model with none of it, <code>--no-mcp</code> starts one.</p>
+<pre><code>hanzo code                             <span class="c"># toolset attached</span>
+hanzo code --no-mcp                    <span class="c"># the model on its own</span>
+hanzo code --project-mcp               <span class="c"># also the repo's own .mcp.json</span></code></pre>
+<p>That last one is off by default on purpose. A repository is untrusted input:
+any MCP server it declares would run with your session's model key, so loading
+one is a decision you make about a repo you trust, not something you inherit by
+cloning.</p>
+<p>The toolset your session attaches runs beside you, on your machine. The cloud
+has its own door for everything else — one address, an ordinary HTTP endpoint.
+Any MCP client points at it — an editor, a CI job, another agent — and gets the
+same tools under the same identity and the same cap.</p>
+<pre><code>POST https://api.hanzo.ai/v1/mcp</code></pre>
+<p>There is no second entry path. <code>/mcp</code> exists only to redirect to it.</p>
+</section>
+
+<hr>
+
+<section id="reach">
+<h2><span class="n">05</span>What it can reach</h2>
+<p>These are capabilities of the cloud, not features of an editor. Each answers
+on its own path under <code>api.hanzo.ai</code>, each is a tool inside a session,
+and each is plain HTTP outside of one. The ones a coding session leans on:</p>
+<table>
+<thead><tr><th>Capability</th><th>Answers at</th><th>What it is</th></tr></thead>
+<tbody>
+<tr><td>code</td><td>/v1/code</td><td>Search and symbols across your repos, for you and your agents.</td></tr>
+<tr><td>lsp</td><td>/v1/lsp</td><td>Real language servers behind that — definitions, references, diagnostics — on an immutable checkout per org, repo and commit, jailed with no network.</td></tr>
+<tr><td>exec</td><td>/v1/exec</td><td>The code interpreter: run a snippet in a sandbox, and move files in and out of the session that sandbox <em>is</em>.</td></tr>
+<tr><td>sandboxes</td><td>/v1/sandboxes</td><td>The one compute primitive — a gVisor pod that runs somebody else's code. Every lifetime is the same object.</td></tr>
+<tr><td>functions</td><td>/v1/functions</td><td>Your serverless code: publish it, call it over HTTP, watch every run and what it cost.</td></tr>
+<tr><td>git</td><td>/v1/git</td><td>Git hosting for your org: create repos, clone, push, and see what they cost.</td></tr>
+<tr><td>projects</td><td>/v1/projects</td><td>Where your sites live: create one, deploy a build, roll back to any release.</td></tr>
+<tr><td>platform</td><td>/v1/platform</td><td>Hanzo PaaS: deploy containers to your own tenant namespace — builds, releases, environments, logs, custom domains.</td></tr>
+<tr><td>deploy</td><td>/v1/deploy</td><td>Hanzo CD: see what each app is running, sync it, and roll back a bad release.</td></tr>
+</tbody>
+</table>
+<p>That is nine of <strong>122</strong>. And the CLI is generated from the same
+specification the API serves — <strong>2,379 operations across 182 products</strong>
+are already subcommands of the binary you just installed, so
+<code>hanzo &lt;product&gt; &lt;verb&gt;</code> works for all of them with no plugin
+to add and no release to wait for.</p>
+</section>
+
+<hr>
+
+<section id="push">
+<h2><span class="n">06</span>Push, and it ships</h2>
+<p>Hanzo hosts your git. A push is delivered to a signed door that starts a build
+for every app tracking that repository and branch; when the build succeeds its
+image is written to the cluster and rolled out. You wire nothing, and the record
+of what is running has one home.</p>
+<pre><code>git remote add hanzo https://git.hanzo.ai/&lt;org&gt;/&lt;repo&gt;
+git push hanzo main</code></pre>
+<p>A push that maps to no application builds nothing, and says so. That is the
+common case and it is not an error — the reply carries the number of builds it
+started, precisely so that "delivered" is never mistaken for "deployed".</p>
+</section>
+
+<hr>
+
+<section id="agents">
+<h2><span class="n">07</span>If you are an agent</h2>
+<p>This page is also markdown, and so is everything else worth reading. Do not
+parse HTML — fetch the text.</p>
+<pre><code>curl https://hanzo.codes/index.md       <span class="c"># this page</span>
+curl https://hanzo.codes/llms.txt      <span class="c"># the index</span>
+curl https://hanzoskills.com/all.md    <span class="c"># the whole corpus</span></code></pre>
+<p>Crawling and training on this site are both permitted — the
+<a href="/robots.txt">robots.txt</a> says so explicitly, for named crawlers and
+unnamed ones alike. We are an AI company; a documentation site an AI cannot read
+is a documentation site that does not work.</p>
+</section>
+
+<footer>
+<div class="fmap">
+  <div><b>Build</b>
+    <a href="https://hanzo.app">hanzo.app</a> app builder
+    <a href="https://hanzo.codes">hanzo.codes</a> code with an agent
+    <a href="https://hanzoskills.com">hanzoskills.com</a> what an agent reads</div>
+  <div><b>Run</b>
+    <a href="https://console.hanzo.ai">console.hanzo.ai</a> cloud console
+    <a href="https://api.hanzo.ai">api.hanzo.ai</a> the API</div>
+  <div><b>Account</b>
+    <a href="https://hanzo.id">hanzo.id</a> sign in
+    <a href="https://pay.hanzo.ai">pay.hanzo.ai</a> top up
+    <a href="https://billing.hanzo.ai">billing.hanzo.ai</a> invoices and usage</div>
+  <div><b>Company</b>
+    <a href="https://hanzo.ai">hanzo.ai</a> canonical
+    <a href="https://hanzo.ventures">hanzo.ventures</a> ventures</div>
+</div>
+<div class="fend"><a href="/index.md">This page as plain text</a> · <a href="/llms.txt">Index for agents</a> · <a href="https://github.com/hanzoai/cli">Source of the CLI</a></div>
+</footer>
+
+</div>
+
+<script>
+// The one interaction on the page: put the install line on the clipboard.
+document.querySelectorAll('.copy').forEach(function(b){
+  b.addEventListener('click', function(){
+    var t = document.querySelector(b.dataset.copy).textContent.trim();
+    navigator.clipboard.writeText(t).then(function(){
+      b.textContent = 'Copied';
+      setTimeout(function(){ b.textContent = 'Copy'; }, 1400);
+    }, function(){ b.textContent = 'Press ⌘C'; });
+  });
+});
+</script>
+</body></html>

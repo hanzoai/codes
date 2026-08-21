@@ -102,29 +102,29 @@ jobs:
             [ "$code" = 200 ] || { echo "::error::/$p answered $code"; exit 1; }
           done
 
-      # The page's credibility rests on those nine addresses being real, and they
-      # are owned by another repo that will rename things without telling this
-      # one. HIP-0139 §2.4 wants singular capability names, so `sandboxes` is
-      # expected to become `sandbox` — measured today, `/v1/sandbox` answers 404
-      # and `/v1/sandboxes` answers 403, so the plural is still the live address.
-      # When that flips, this step says so instead of leaving a dead address up.
+      # HIP-0139 §2.4 wants singular capability names, so `sandboxes` is expected
+      # to become `sandbox` and this page would then print a dead address.
       #
-      # A warning, not a failure: a marketing deploy must not go red because an
-      # unrelated API is having a moment, and 401/403 is the RIGHT answer here —
-      # it proves the route exists and refuses us, which is all we are asking.
-      - name: the addresses on the page still answer
+      # Probing every stem was the obvious check and it was the wrong one: a
+      # prefix-only app has no handler at its own root, so /v1/code, /v1/git,
+      # /v1/platform, /v1/deploy and /v1/lsp all answer 404 while being perfectly
+      # alive underneath. Five false warnings a deploy teaches everyone to ignore
+      # warnings. So this asks the one question that is actually in doubt, where
+      # 404-vs-refusal is the whole signal: 401/403 means the route is there and
+      # wants a credential, 404 means it is not.
+      - name: the sandbox address has not been renamed under us
         continue-on-error: true
         run: |
           set -u
-          for a in code lsp exec sandboxes functions git projects platform deploy; do
-            c=$(curl -s -o /dev/null -m 10 -w '%{http_code}' "https://api.hanzo.ai/v1/$a" || echo 000)
-            case "$c" in
-              404) echo "::warning::/v1/$a is 404 — the page prints an address that no longer exists" ;;
-              000) echo "notice: /v1/$a unreachable, ignoring" ;;
-              *)   echo "/v1/$a -> $c" ;;
-            esac
-            sleep 1
-          done
+          one=$(curl -s -o /dev/null -m 10 -w '%{http_code}' https://api.hanzo.ai/v1/sandbox   || echo 000)
+          many=$(curl -s -o /dev/null -m 10 -w '%{http_code}' https://api.hanzo.ai/v1/sandboxes || echo 000)
+          echo "/v1/sandbox -> $one    /v1/sandboxes -> $many"
+          case "$one:$many" in
+            404:40*) echo "unchanged: the plural is still the live address" ;;
+            40[13]:404) echo "::warning::the rename landed — /v1/sandbox now answers and /v1/sandboxes is gone. Change the copy in public/index.html, public/index.md and public/llms.txt." ;;
+            40[13]:40[13]) echo "::warning::both spellings answer — the alias exists now, so the copy should move to the singular /v1/sandbox." ;;
+            *) echo "notice: inconclusive ($one/$many), ignoring" ;;
+          esac
 
       # The point of this repo, and the one thing a file in git cannot settle by
       # itself. Cloudflare does not replace our robots.txt — it PREPENDS a

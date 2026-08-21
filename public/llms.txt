@@ -40,8 +40,10 @@
 - `/v1/platform`: Hanzo PaaS — deploy containers to your own tenant namespace: builds, releases, environments, logs, custom domains.
 - `/v1/deploy`: Hanzo CD — see what each app is running, sync it, and roll back a bad release.
 
-There are 122 capabilities in total. This list is the subset a coding session
-leans on; the full corpus is at hanzoskills.com.
+This list is the subset a coding session leans on. The CLI exposes all 182
+products and 2,379 operations as subcommands, generated from the same
+specification the API serves; the full documentation corpus is at
+hanzoskills.com.
 
 ## What a push does
 

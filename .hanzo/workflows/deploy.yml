@@ -85,15 +85,19 @@ jobs:
           done
 
       # THE POINT OF THE MIGRATION, and the one thing a file in git cannot
-      # settle by itself. On the Worker this host served a zone-level managed
-      # robots.txt PREPENDED above ours — `Content-Signal: ai-train=no` and
+      # settle by itself. This host served a zone-level managed robots.txt
+      # PREPENDED above ours — `Content-Signal: ai-train=no` and
       # `ClaudeBot / Disallow: /` sitting immediately over our `ai-train=yes`
       # and `Allow: /`, so which one a crawler honoured was a question about its
       # parser rather than about our intent. An AI company cannot leave that
-      # ambiguous, and no change in this repo could remove it.
+      # ambiguous.
       #
-      # Serving from our own plane does. Asserted on every publish, because the
-      # thing that put it there is a zone setting and zone settings come back.
+      # MOVING THE ORIGIN DOES NOT FIX IT. Measured: with the site already
+      # served from our own plane, the edge still prepended 1836 bytes ahead of
+      # our 1657. The injector is one zone field —
+      # `is_robots_txt_managed` in PUT /zones/<id>/bot_management — and it is
+      # now false. Asserted on every publish, because a zone field is not in
+      # this repo and nothing here would notice it coming back.
       - name: Crawlers are actually welcome
         run: |
           set -euo pipefail

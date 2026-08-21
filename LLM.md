@@ -41,19 +41,42 @@ static one or it does not exist. Same for `_redirects`.
 
 **Two rules that are not obvious**
 
-**1. Serving our own robots.txt is the point, not a detail.**
+**1. The managed robots.txt is a ZONE field, and moving the origin does not
+touch it.**
 
-On the Worker, Cloudflare's zone-level managed `robots.txt` was **prepended** to
-ours rather than replacing it, so one document said both things — a
-`# BEGIN Cloudflare Managed content` block carrying `Content-Signal: ai-train=no`
-and `ClaudeBot / Disallow: /` sitting immediately above our `ai-train=yes` and
-`Allow: /`. Which one a crawler honours is then a question about that crawler's
-parser rather than about our intent, and an AI company cannot leave that
-ambiguous. No change in this repo could remove it; the origin move did.
+Cloudflare's managed `robots.txt` is **prepended** to ours rather than replacing
+it, so one document said both things — a `# BEGIN Cloudflare Managed content`
+block carrying `Content-Signal: ai-train=no` and `ClaudeBot / Disallow: /`
+sitting immediately above our `ai-train=yes` and `Allow: /`. Which one a crawler
+honours is then a question about that crawler's parser rather than about our
+intent, and an AI company cannot leave that ambiguous.
 
-The deploy workflow asserts it on every publish and fails naming the zone setting
-(`AI Scrapers and Crawlers` → managed `robots.txt`), because the thing that put
-it there is a zone setting and zone settings come back.
+**Moving off the Worker did NOT fix it, and that is worth knowing because it is
+the obvious guess.** Measured with the site already served from our own plane:
+the edge still prepended 1836 bytes ahead of our 1657. The injection is at the
+edge and has nothing to do with who the origin is.
+
+One zone field does it, and it is reachable by API rather than only the
+dashboard — which is what the docs imply, since they document only
+Security Settings → Bot traffic:
+
+```
+GET  /zones/<id>/bot_management     -> is_robots_txt_managed: true
+PUT  /zones/<id>/bot_management     {"is_robots_txt_managed": false}
+```
+
+Diffing this zone against `hanzo.works` (whose robots.txt was already clean) is
+what found it: the two payloads differed in exactly that field. Note the
+neighbouring `cf_robots_variant` is a different control — `policy_only` displays
+the Content Signals Policy for a domain that serves NO robots.txt of its own, so
+it is inert here either way. Ours is `off`.
+
+Credential: `kubectl -n hanzo get secret cloudflare-api-credentials` → `EMAIL` +
+`APIKEY`, sent as `X-Auth-Email` / `X-Auth-Key` (a global key, not a bearer).
+`cloudflare-credentials` is a placeholder — ignore it.
+
+The deploy workflow asserts the served file on every publish, because a zone
+field is not in this repo and nothing here would notice it coming back.
 
 **2. Claims are checked, not remembered.**
 

@@ -102,24 +102,33 @@ jobs:
             [ "$code" = 200 ] || { echo "::error::/$p answered $code"; exit 1; }
           done
 
-      # The point of this repo. If Cloudflare's managed robots.txt is switched on
-      # for this zone it replaces ours, and an AI company ends up telling every AI
-      # to go away. A file in git cannot fix that — only the dashboard toggle
-      # ("AI Scrapers and Crawlers" / managed robots.txt) can — so fail loudly and
-      # name the fix rather than shipping green over a blocked site.
+      # The point of this repo, and the one thing a file in git cannot settle by
+      # itself. Cloudflare does not replace our robots.txt — it PREPENDS a
+      # "BEGIN Cloudflare Managed content" block to it. So the host can serve
+      # `Content-Signal: ai-train=no` and `ClaudeBot / Disallow: /` immediately
+      # above our `ai-train=yes` and `ClaudeBot / Allow: /`, and which one a
+      # given crawler honours is then a question about that crawler's parser
+      # rather than about our intent. An AI company cannot leave that ambiguous.
+      #
+      # Only the zone setting removes the block. Fail, and name the fix.
       - name: crawlers are actually welcome
         run: |
           set -euo pipefail
-          curl -sS https://hanzo.codes/robots.txt -o /tmp/live-robots.txt
-          if ! grep -q 'ai-train=yes' /tmp/live-robots.txt; then
-            echo "::error::the live robots.txt is not ours — Cloudflare's managed robots.txt is overriding it."
-            echo "::error::Fix in the Cloudflare dashboard: hanzo.codes zone -> AI Scrapers and Crawlers -> turn off the managed robots.txt / block-AI-bots setting."
-            echo "--- what the host actually serves ---"; cat /tmp/live-robots.txt
-            exit 1
+          curl -sS https://hanzo.codes/robots.txt -o /tmp/robots.txt
+
+          if grep -q 'BEGIN Cloudflare Managed content' /tmp/robots.txt; then
+            echo "::error::Cloudflare is prepending its managed robots.txt, which disallows ClaudeBot, GPTBot, CCBot, Google-Extended, Bytespider, Amazonbot, Applebot-Extended and meta-externalagent, and signals ai-train=no — directly contradicting the file in this repo."
+            echo "::error::Fix: Cloudflare dashboard -> hanzo.codes -> AI Scrapers and Crawlers -> turn off the managed robots.txt (and the block-AI-bots setting). No change in this repo can override it."
           fi
+
+          grep -q 'ai-train=yes' /tmp/robots.txt || {
+            echo "::error::our robots.txt is not being served at all"; exit 1; }
+
+          fail=0
           for bot in ClaudeBot GPTBot CCBot Google-Extended Bytespider Amazonbot meta-externalagent Applebot-Extended PerplexityBot; do
-            if awk -v b="$bot" 'BEGIN{IGNORECASE=1} $0 ~ "^User-agent:[[:space:]]*"b"[[:space:]]*$" {f=1;next} /^User-agent:/{f=0} f && /^Disallow:[[:space:]]*\/[[:space:]]*$/ {found=1} END{exit !found}' /tmp/live-robots.txt; then
-              echo "::error::$bot is disallowed on the live robots.txt"; exit 1
+            if awk -v b="$bot" 'BEGIN{IGNORECASE=1} $0 ~ "^User-agent:[[:space:]]*"b"[[:space:]]*$" {f=1;next} /^User-agent:/{f=0} f && /^Disallow:[[:space:]]*\/[[:space:]]*$/ {found=1} END{exit !found}' /tmp/robots.txt; then
+              echo "::error::$bot is disallowed somewhere in the live robots.txt"; fail=1
             fi
           done
+          [ "$fail" = 0 ] || { echo "--- what the host actually serves ---"; cat /tmp/robots.txt; exit 1; }
           echo "hanzo.codes welcomes every named crawler, from ${GITHUB_SHA:0:8}"

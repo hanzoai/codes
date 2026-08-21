@@ -175,32 +175,40 @@ footer a{color:var(--soft)}
        squash on press. Pure CSS, no script, and it holds still for anyone who
        asked their OS to stop moving things. -->
   <svg class="mark" role="img" aria-label="Hanzo" viewBox="0 0 67 67" xmlns="http://www.w3.org/2000/svg">
-  <style>.o{fill:#f4f4f2;opacity:0;transform-box:fill-box;transform-origin:left center;animation:fold .42s cubic-bezier(.16,1,.3,1) forwards}
-  @keyframes fold{from{opacity:0;transform:perspective(320px) rotateY(90deg)}to{opacity:1;transform:none}}
-  .o0{animation-delay:0s}.o1{animation-delay:.06s}.o2{animation-delay:.12s}.o3{animation-delay:.18s}.o4{animation-delay:.24s}
-  .hov{transform-box:view-box;transform-origin:33.5px 33.5px}
-  .prs{transform-box:view-box;transform-origin:33.5px 33.5px;transition:transform .22s cubic-bezier(.22,1,.36,1)}
-  svg:hover .hov{animation:turn .85s cubic-bezier(.45,0,.2,1)}
-  svg:active .prs{transform:scale(.92)}
-  @keyframes turn{0%{transform:perspective(300px) rotateY(0)}100%{transform:perspective(300px) rotateY(360deg)}}
-  @media (prefers-reduced-motion:reduce){.hov,.prs{animation:none!important;transform:none!important}.o{opacity:1;animation:none;transform:none}}
+  <!-- Every selector below is prefixed .mark on purpose. A <style> inside inline
+       SVG is NOT scoped to that SVG — it applies to the whole document — so a
+       bare `.o` here would reach into the terminal transcript and hide it. -->
+  <style>
+  .mark .fold{fill:#f4f4f2;opacity:0;transform-box:fill-box;transform-origin:left center;
+    animation:markfold .42s cubic-bezier(.16,1,.3,1) forwards}
+  @keyframes markfold{from{opacity:0;transform:perspective(320px) rotateY(90deg)}to{opacity:1;transform:none}}
+  .mark .d0{animation-delay:0s}.mark .d1{animation-delay:.06s}.mark .d2{animation-delay:.12s}
+  .mark .d3{animation-delay:.18s}.mark .d4{animation-delay:.24s}
+  .mark .turn,.mark .press{transform-box:view-box;transform-origin:33.5px 33.5px}
+  .mark .press{transition:transform .22s cubic-bezier(.22,1,.36,1)}
+  .mark:hover .turn{animation:markturn .85s cubic-bezier(.45,0,.2,1)}
+  .mark:active .press{transform:scale(.92)}
+  @keyframes markturn{0%{transform:perspective(300px) rotateY(0)}100%{transform:perspective(300px) rotateY(360deg)}}
+  @media (prefers-reduced-motion:reduce){
+    .mark .turn,.mark .press{animation:none!important;transform:none!important}
+    .mark .fold{opacity:1;animation:none;transform:none}}
   </style>
-  <g class="hov"><g class="prs">
-  <path class="o o0" d="M22.21 0H0V22.3184H22.21V0Z"/>
-  <path class="o o1" d="M66.7198 0H44.5098V22.3184H66.7198V0Z"/>
-  <path class="o o2" d="M66.7038 22.3184H22.2534L0.0878906 44.6367H44.4634L66.7038 22.3184Z"/>
-  <path class="o o3" d="M22.21 67V44.6369H0V67H22.21Z"/>
-  <path class="o o4" d="M66.7198 67V44.6369H44.5098V67H66.7198Z"/>
+  <g class="turn"><g class="press">
+  <path class="fold d0" d="M22.21 0H0V22.3184H22.21V0Z"/>
+  <path class="fold d1" d="M66.7198 0H44.5098V22.3184H66.7198V0Z"/>
+  <path class="fold d2" d="M66.7038 22.3184H22.2534L0.0878906 44.6367H44.4634L66.7038 22.3184Z"/>
+  <path class="fold d3" d="M22.21 67V44.6369H0V67H22.21Z"/>
+  <path class="fold d4" d="M66.7198 67V44.6369H44.5098V67H66.7198Z"/>
   </g></g>
   </svg>
 
   <h1>Describe the work.<br>Hanzo does it in your repo.<br><em>Against your tests.</em></h1>
   <p class="lede">One binary. Your files, your git, your credentials. The whole Hanzo
-  toolset is attached the moment a session starts, and every tool in it is an
+  toolset is attached the moment a session starts, and everything it reaches is an
   ordinary API call — so the same work runs with a terminal or without one.</p>
   <div class="btns">
     <a class="btn solid" href="#install">Install</a>
-    <a class="btn" href="#tools">What it can reach</a>
+    <a class="btn" href="#reach">What it can reach</a>
     <a class="btn" href="https://hanzoskills.com">Docs for agents</a>
   </div>
 </div></div>

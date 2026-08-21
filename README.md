@@ -55,11 +55,15 @@ Don't do it by hand. Push to `main`.
 
 The workflow publishes, purges the edge, then re-fetches the live host and fails
 unless the bytes being served are the bytes it just published — and separately
-asserts that the live `robots.txt` is ours. Cloudflare can inject a managed
-`robots.txt` at the zone level that disallows ClaudeBot, GPTBot, CCBot and the
-rest; this domain served exactly that before this repo existed. A file in git
-does not beat a zone setting, so the job asks the live host every time and names
-the dashboard toggle when the answer is wrong.
+asserts that a crawler reading `/robots.txt` is actually welcomed.
+
+That last check currently **fails, correctly**. Cloudflare prepends a managed
+`robots.txt` block at the zone level that disallows ClaudeBot, GPTBot, CCBot,
+Google-Extended, Bytespider, Amazonbot, Applebot-Extended and meta-externalagent
+and signals `ai-train=no`, immediately above our file saying the opposite. No
+change here can remove it — the fix is Cloudflare dashboard → `hanzo.codes` →
+**AI Scrapers and Crawlers** → turn off the managed `robots.txt`. See
+[LLM.md](LLM.md).
 
 Break-glass: `npx wrangler@3 deploy`. Afterwards `main` and the live host are two
 different states again, so re-run the workflow.

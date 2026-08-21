@@ -21,6 +21,49 @@ to run, no container to pull, and nothing to keep current but the file itself.
 The npm package is a downloader around that same binary, not a second
 implementation of it.
 
+## Drop into any agent
+
+The toolset is a streamable-HTTP MCP server at `https://api.hanzo.ai/v1/mcp`, so
+any MCP client attaches to it. Each agent registers it its own way and keeps
+skills in its own directory. Sign in and mint a key first:
+
+```sh
+hanzo auth login
+hanzo keys create
+```
+
+Claude Code:
+
+```sh
+claude mcp add --transport http hanzo https://api.hanzo.ai/v1/mcp \
+  --header "Authorization: Bearer $(hanzo keys create)"
+npx @hanzo/skill add hanzoai/skills     # ~/.claude/skills
+```
+
+Codex:
+
+```sh
+export HANZO_API_KEY=$(hanzo keys create)
+codex mcp add hanzo --url https://api.hanzo.ai/v1/mcp \
+  --bearer-token-env-var HANZO_API_KEY
+npx @hanzo/skill add hanzoai/skills     # ~/.agents/skills
+```
+
+Cursor — write `.cursor/mcp.json`, then add the skills:
+
+```json
+{"mcpServers":{"hanzo":{"url":"https://api.hanzo.ai/v1/mcp",
+  "headers":{"Authorization":"Bearer <key>"}}}}
+```
+
+```sh
+npx @hanzo/skill add hanzoai/skills     # ~/.cursor/skills
+```
+
+Claude Code, Codex, Cursor, OpenClaw and Hanzo Bot read the same skills. The
+model API is OpenAI- and Anthropic-shaped, so the OpenAI and Anthropic SDKs
+point at `api.hanzo.ai` unchanged.
+
 ## A session
 
 A trailing task runs headless; leave it off and you get an interactive session

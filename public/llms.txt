@@ -27,6 +27,8 @@
 
 - `POST https://api.hanzo.ai/v1/mcp`: The single MCP endpoint for the cloud. Any MCP client — an editor, a CI job, another agent — gets the same tools under the same identity and the same spending cap. `/mcp` is a redirect to it, not a second door.
 - Note for precision: the toolset a `hanzo code` session attaches by default is a local `hanzo-mcp` process running beside you, not this remote endpoint. They expose the same tools; they are different things and a session needs no network door to have its tools.
+- Registering that door differs per client: `claude mcp add --transport http hanzo <url> --header "Authorization: Bearer <key>"`, `codex mcp add hanzo --url <url> --bearer-token-env-var HANZO_API_KEY`, or a `.cursor/mcp.json` entry for Cursor. Full recipes: https://hanzo.codes/index.md
+- Skills install per agent with `npx @hanzo/skill add hanzoai/skills` — `~/.claude/skills` (Claude Code), `~/.agents/skills` (Codex, OpenClaw), `~/.cursor/skills` (Cursor), `~/.hanzo/bot/skills` (Hanzo Bot).
 
 ## Capabilities a coding session reaches
 

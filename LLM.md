@@ -21,20 +21,42 @@ says.
 
 ## Two rules that are not obvious
 
-**1. The live robots.txt is not necessarily the one in this repo.**
+**1. Cloudflare prepends to robots.txt. It does not replace it.**
 
-Cloudflare's "AI Scrapers and Crawlers" zone setting injects a managed
-`robots.txt` that disallows ClaudeBot, GPTBot, CCBot, Google-Extended, Bytespider,
-Amazonbot, Applebot-Extended and meta-externalagent, and sets
-`Content-Signal: ai-train=no`. That is what this domain served. Shipping a file
-does not switch it off — the toggle is in the dashboard, on the `hanzo.codes`
-zone. The deploy workflow's last step re-fetches the live `robots.txt` and fails
-with the fix named if the managed one is winning, so the state can never be
-silently wrong again.
+Measured on the live host after the first deploy: the served `/robots.txt` is our
+file with a `# BEGIN Cloudflare Managed content` block glued on **above** it. So
+the same document says both things —
 
-`hanzo cloudflare zones list` currently answers
-`503 cloudflare is not connected for this org`, so the toggle needs somebody with
-dashboard access.
+```
+# BEGIN Cloudflare Managed content
+User-agent: *
+Content-Signal: search=yes,ai-train=no,use=reference
+...
+User-agent: ClaudeBot
+Disallow: /
+# END Cloudflare Managed Content
+
+  (our file starts here)
+User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+...
+User-agent: ClaudeBot
+Allow: /
+```
+
+Which of those a crawler honours is then a question about that crawler's parser,
+not about our intent. Most implementations merge same-agent groups and let the
+least restrictive rule win at equal path length, so `Allow: /` probably wins — but
+"probably" is not a position an AI company should take about whether AI may read
+its documentation, and the `ai-train=no` signal sits above ours regardless.
+
+No change in this repo can remove that block. The zone setting can: Cloudflare
+dashboard → `hanzo.codes` → **AI Scrapers and Crawlers** → turn off the managed
+`robots.txt`. The deploy workflow's last step fetches the live file, fails, and
+names that fix, so the state cannot go quietly wrong again.
+
+`hanzo cloudflare zones list` answers `503 cloudflare is not connected for this
+org`, so this needs somebody with dashboard access.
 
 **2. Claims are checked, not remembered.**
 

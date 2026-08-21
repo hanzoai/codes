@@ -86,7 +86,8 @@ Specific traps found the last time:
 
 Monochrome, from `@hanzo/tokens` (`hsl(0 0% n)` throughout) as `@hanzo/brand`
 paints dark. `#000` ground, `#f4f4f2` ink, `#9c9c98` soft, `#6a6a66` faint,
-`#232323` rules, `#0a0a0a` panels. Identical to hanzoskills.com, deliberately.
+`#232323` rules, `#0a0a0a` panels. `--faint` is `#7a7a75`, one step lighter than
+hanzoskills.com's, which measures under 4.5:1 on both grounds.
 
 The predecessor page used `#faf8f4` cream and `#c2410c` orange. There is no
 orange in the Hanzo palette. The deploy workflow rejects any hex outside the
@@ -101,8 +102,81 @@ squash on press, pure CSS, and inert under `prefers-reduced-motion`). Inlined
 because the page must render with zero network requests beyond itself, and
 because the CSP on a static Worker gives nothing for free.
 
+`og.png` is `@hanzo/logo` `dist/og/og-image.png`, 1200x630, carried so shares
+render the mark instead of nothing.
+
 If the mark changes upstream, re-copy from `/home/z/work/hanzo/logo/dist/` and
 `/home/z/work/hanzo/logo/svg/`. Do not redraw the paths by hand.
+
+## The mark sheet
+
+A hidden `<svg>` of `<symbol>`s at the top of `<body>` holds every mark the page
+repeats — Hanzo, Claude, Codex, Cursor, OpenAI, plus a chevron and a document
+glyph. The agent bar renders twice for its loop, so inlining the paths would
+carry Claude's 2.5KB body four times; `<use href="#m-…">` carries it once.
+
+Sources, all copied verbatim, none redrawn:
+
+| Symbol | From |
+|---|---|
+| `m-hanzo` | `hanzo/logo/dist/logo-menubar.svg` (canonical 7-path, `currentColor`) |
+| `m-claude`, `m-codex`, `m-cursor`, `m-openai` | `hanzo.ai/public/providers/<n>.svg` |
+
+`fill="white"` on the provider files becomes `currentColor` so a chip inherits
+its own colour. Geometry is untouched. Regenerate with the script that reads
+those files rather than pasting paths by hand.
+
+**OpenClaw has no mark anywhere in the estate**, so `m-openclaw` is an `OC`
+monogram plate. `hanzo.ai/scripts/gen-marks.mjs` sets that policy: a monogram is
+the honest fallback, a look-alike pictograph is not. If a real OpenClaw mark
+lands, replace the plate.
+
+## Controls
+
+Radius and button treatment come from hanzo.ai, read off the live page rather
+than guessed:
+
+| | hanzo.ai | here |
+|---|---|---|
+| button radius | `9999px` (pill) | `--pill: 999px` |
+| button height | 44px | 44px |
+| horizontal padding | 28px | 1.75rem |
+| fill / outline pair | white on black / `neutral-700` hairline | `--ink` / `--line-hi` |
+| card radius | 24px | `--soft-r: 16px` (menu, `pre`, `.term`) |
+
+The page keeps its own mono uppercase lettering; only the shape is borrowed.
+Every button was `border-radius: 0` before this.
+
+`.hero` must not carry `overflow:hidden` — it clips the setup menu where it
+drops past the hero edge. The dot field is `inset:0` and never spills, so
+nothing needs the clip.
+
+The table scroller is the parent `.scroll`, not the `<table>`. `min-width` on
+the element that also owns `overflow-x` makes that element wider than the page;
+that shape overflowed 604px into a 390px viewport.
+
+## The agent list
+
+The bar and the setup menu name only clients we actually support. Verified, not
+assumed:
+
+- Skills targets, from `hanzo/skill` `src/cli.ts`: `~/.claude/skills` (Claude
+  Code), `~/.agents/skills` (Codex, OpenClaw), `~/.cursor/skills` (Cursor),
+  `~/.hanzo/bot/skills` (Hanzo Bot).
+- Session backends, from `hanzo code --help`: `dev`, `claude`, `codex`. Those
+  three and no others.
+- The model API answers `/v1/chat/completions` and `/v1/messages`, so the OpenAI
+  and Anthropic SDKs point at it unchanged.
+
+**Hermes is not on the list.** The only Hermes in the estate is the React Native
+JS engine. There is no Hermes agent to support, and a mark for one would be a
+claim we cannot back.
+
+Each menu row copies a prompt written for that tool — its own registration
+command, its own skills directory, its own way to confirm. The syntax was read
+from the installed binaries (`claude mcp add --help`, `codex mcp add --help`),
+not from memory. `codex mcp add` takes `--bearer-token-env-var`; `claude mcp
+add` takes `--header`. They are not interchangeable.
 
 ## The capability names, and why the plural is still here
 

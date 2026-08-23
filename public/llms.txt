@@ -23,11 +23,11 @@
 - `hanzo auth login` — an identity from Hanzo IAM, not an API key in a file.
 - `hanzo <product> <verb>` — every cloud product is a subcommand, generated from the same specification the API serves. 2,379 operations across 182 products, plus 18 hand-written commands.
 
-## The one MCP door
+## The one MCP endpoint
 
-- `POST https://api.hanzo.ai/v1/mcp`: The single MCP endpoint for the cloud. Any MCP client — an editor, a CI job, another agent — gets the same tools under the same identity and the same spending cap. `/mcp` is a redirect to it, not a second door.
-- Note for precision: the toolset a `hanzo code` session attaches by default is a local `hanzo-mcp` process running beside you, not this remote endpoint. They expose the same tools; they are different things and a session needs no network door to have its tools.
-- Registering that door differs per client: `claude mcp add --transport http hanzo <url> --header "Authorization: Bearer <key>"`, `codex mcp add hanzo --url <url> --bearer-token-env-var HANZO_API_KEY`, or a `.cursor/mcp.json` entry for Cursor. Full recipes: https://hanzo.codes/index.md
+- `POST https://api.hanzo.ai/v1/mcp`: The single MCP endpoint for the cloud. Any MCP client — an editor, a CI job, another agent — gets the same tools under the same identity and the same spending cap. `/mcp` is a redirect to it, not a second endpoint.
+- Note for precision: the toolset a `hanzo code` session attaches by default is a local `hanzo-mcp` process running beside you, not this remote endpoint. They expose the same tools; they are different things and a session needs nothing on the network to have its tools.
+- Registering that endpoint differs per client: `claude mcp add --transport http hanzo <url> --header "Authorization: Bearer <key>"`, `codex mcp add hanzo --url <url> --bearer-token-env-var HANZO_API_KEY`, or a `.cursor/mcp.json` entry for Cursor. Full recipes: https://hanzo.codes/index.md
 - Skills install per agent with `npx @hanzo/skill add hanzoai/skills` — `~/.claude/skills` (Claude Code), `~/.agents/skills` (Codex, OpenClaw), `~/.cursor/skills` (Cursor), `~/.hanzo/bot/skills` (Hanzo Bot).
 
 ## Capabilities a coding session reaches
@@ -49,7 +49,7 @@ hanzoskills.com.
 
 ## What a push does
 
-A push to a Hanzo-hosted repository is delivered to a signed door, which starts a
+A push to a Hanzo-hosted repository is delivered to a signed endpoint, which starts a
 build for every application tracking that repository and branch. When a build
 succeeds its image is written to the cluster and the operator rolls it out. Be
 precise about this: a push that matches no application builds nothing and says

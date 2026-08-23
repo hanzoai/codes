@@ -124,8 +124,8 @@ That last one is off by default on purpose. A repository is untrusted input: any
 MCP server it declares would run with your session's model key, so loading one is
 a decision you make about a repo you trust, not something you inherit by cloning.
 
-The toolset your session attaches runs beside you, on your machine. The cloud has
-its own door for everything else — one address, an ordinary HTTP endpoint. Any
+The toolset your session attaches runs beside you, on your machine. The cloud
+answers everything else at one address of its own — an ordinary HTTP endpoint. Any
 MCP client points at it — an editor, a CI job, another agent — and gets the same
 tools under the same identity and the same cap.
 
@@ -160,7 +160,7 @@ add and no release to wait for.
 
 ## Push, and it ships
 
-Hanzo hosts your git. A push is delivered to a signed door that starts a build for
+Hanzo hosts your git. A push is delivered to a signed endpoint that starts a build for
 every app tracking that repository and branch; when the build succeeds its image
 is written to the cluster and rolled out. You wire nothing, and the record of what
 is running has one home.

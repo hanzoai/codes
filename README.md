@@ -40,7 +40,7 @@ Every claim on the page is checked against source, not remembered:
 |---|---|
 | `hanzo code`, `hanzo dev`, `hanzo desktop`, `--no-mcp`, `--project-mcp`, `--no-route` | `hanzoai/cli` `src/main.rs`, `src/commands/code/` |
 | The capability names, addresses and descriptions | `hanzoai/cloud` `manifest/apps.go` and `public.yaml` |
-| `POST /v1/mcp` is the one door | `hanzoai/cloud` `manifest/door/door.go`, `fleet/mcp.go` |
+| `POST /v1/mcp` is the one endpoint | `hanzoai/cloud` `manifest/door/door.go`, `fleet/mcp.go` |
 | What a push actually triggers | `hanzoai/cloud` `apps/platform/hook.go`, `apps/platform/push.go` |
 | Install lines | `hanzoai/hanzo.sh`, `hanzoai/cli` `npm/package.json` |
 

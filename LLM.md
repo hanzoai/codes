@@ -95,9 +95,9 @@ Specific traps found the last time:
   prefixes.
 - The toolset a `hanzo code` session attaches by default is a **local
   `hanzo-mcp` process**, not `api.hanzo.ai/v1/mcp`. Same tools, different thing.
-  Do not write that a session is wired to the cloud door by default.
+  Do not write that a session is wired to the cloud MCP endpoint by default.
 - `POST /v1/git-webhook` is a tombstone that answers 410. Do not cite it.
-- "A push is the deploy" overstates. A push is delivered to a signed door which
+- "A push is the deploy" overstates. A push is delivered to a signed endpoint which
   *starts a build* for every app tracking that repo and branch; a reconciler
   applies the image when the build succeeds. A push matching no app builds
   nothing, and that is the common case.

@@ -29,7 +29,7 @@ on:
     paths:
       - 'public/**'
       - 'bin/gates'
-      - '.hanzo/workflows/deploy.yml'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
 concurrency:

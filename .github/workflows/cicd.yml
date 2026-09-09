@@ -5,7 +5,7 @@ name: CI/CD
 # the repo-root hanzo.yml, which platform.hanzo.ai reads too.
 #
 # `.hanzo/workflows`, not `.github/workflows`. The reusable exists at
-# hanzoai/ci/.hanzo/workflows/build.yml on both hosts and a caller naming the
+# hanzoai/ci/.github/workflows/build.yml on both hosts and a caller naming the
 # `.github` path silently resolves nothing. The forge also collects workflows
 # from the FIRST of WORKFLOW_DIRS present in the pushed commit, so once this
 # directory exists a `.github/workflows` beside it would be dark config.
@@ -28,5 +28,5 @@ concurrency:
 
 jobs:
   cicd:
-    uses: hanzoai/ci/.hanzo/workflows/build.yml@v1
+    uses: hanzoai/ci/.github/workflows/build.yml@v1
     secrets: inherit
